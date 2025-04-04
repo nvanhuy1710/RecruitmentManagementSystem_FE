@@ -11,3 +11,55 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.ant-layout {
+  min-height: 100vh;
+}
+
+.ant-layout-header {
+  padding: 0;
+  height: 64px;
+  line-height: 64px;
+  background: #001529;
+}
+
+.ant-layout-footer {
+  padding: 24px 50px;
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 14px;
+  background: #f0f2f5;
+}
+
+.ant-menu-horizontal {
+  line-height: 64px;
+  border: none;
+}
+
+.logo {
+  float: left;
+  margin-right: 40px;
+}
+
+.logo a {
+  display: inline-block;
+  font-size: 20px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+}
+
+.ant-card {
+  box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16),
+              0 3px 6px 0 rgba(0, 0, 0, 0.12),
+              0 5px 12px 4px rgba(0, 0, 0, 0.09);
+}
+
+.ant-card-hoverable:hover {
+  box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16),
+              0 3px 6px 0 rgba(0, 0, 0, 0.12),
+              0 5px 12px 4px rgba(0, 0, 0, 0.09);
+  border-color: transparent;
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
