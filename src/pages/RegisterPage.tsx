@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, message, Typography, DatePicker, Select, Lay
 import { UserOutlined, LockOutlined, MailOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { authService } from '../services/apiService';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -25,15 +26,15 @@ const RegisterPage: React.FC = () => {
   const onFinish = async (values: RegisterFormValues) => {
     setLoading(true);
     try {
-      // TODO: Implement actual registration logic here
-      console.log('Registration values:', {
-        ...values,
+      const { confirmPassword, ...registerData } = values;
+      await authService.register({
+        ...registerData,
         birth: values.birth.format('YYYY-MM-DD')
       });
-      message.success('Registration successful!');
+      message.success('Registration successful! Please login.');
       navigate('/login');
-    } catch (error) {
-      message.error('Registration failed. Please try again.');
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

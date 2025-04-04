@@ -1,17 +1,53 @@
-import React from 'react';
-import { Layout, Menu, Button, Space, Avatar } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Layout, Menu, Button, Space, Avatar, Dropdown } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserOutlined, LogoutOutlined, LoginOutlined, UserAddOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, LoginOutlined, UserAddOutlined, DownOutlined } from '@ant-design/icons';
+import { authService } from '../../services/apiService';
 
 const { Header: AntHeader } = Layout;
 
+interface UserInfo {
+  username: string;
+  email?: string;
+  fullName?: string;
+}
+
 const Header: React.FC = () => {
   const navigate = useNavigate();
-  const isAuthenticated = false; // TODO: Replace with actual auth state
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      setUserInfo(JSON.parse(storedUserInfo));
+    }
+  }, []);
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
-    navigate('/login');
+    authService.logout();
+    setUserInfo(null);
+  };
+
+  const userMenu = {
+    items: [
+      {
+        key: 'profile',
+        icon: <UserOutlined />,
+        label: 'Profile'
+      },
+      {
+        key: 'logout',
+        icon: <LogoutOutlined />,
+        label: 'Logout'
+      }
+    ],
+    onClick: ({ key }: { key: string }) => {
+      if (key === 'logout') {
+        handleLogout();
+      } else if (key === 'profile') {
+        navigate('/profile');
+      }
+    }
   };
 
   return (
@@ -39,15 +75,16 @@ const Header: React.FC = () => {
         </Menu>
       </div>
       <Space>
-        {isAuthenticated ? (
-          <>
-            <Button type="text" icon={<UserOutlined />} style={{ color: 'white' }}>
-              Profile
+        {userInfo ? (
+          <Dropdown menu={userMenu} placement="bottomRight">
+            <Button type="text" style={{ color: 'white' }}>
+              <Space>
+                <Avatar size="small" icon={<UserOutlined />} />
+                {userInfo.username}
+                <DownOutlined />
+              </Space>
             </Button>
-            <Button type="text" icon={<LogoutOutlined />} style={{ color: 'white' }} onClick={handleLogout}>
-              Logout
-            </Button>
-          </>
+          </Dropdown>
         ) : (
           <>
             <Button 

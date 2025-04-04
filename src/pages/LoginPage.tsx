@@ -3,23 +3,30 @@ import { Form, Input, Button, Card, message, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from 'antd';
+import { authService } from '../services/apiService';
 
 const { Content } = Layout;
 const { Title } = Typography;
 
+interface LoginFormValues {
+  username: string;
+  password: string;
+}
+
 const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string>('');
   const navigate = useNavigate();
 
-  const onFinish = async (values: { username: string; password: string }) => {
+  const onFinish = async (values: LoginFormValues) => {
     setLoading(true);
+    setLoginError('');
     try {
-      // TODO: Implement actual login logic here
-      console.log('Login values:', values);
+      await authService.login(values.username, values.password);
       message.success('Login successful!');
       navigate('/');
-    } catch (error) {
-      message.error('Login failed. Please check your credentials.');
+    } catch (error: any) {
+      setLoginError('Invalid username or password');
     } finally {
       setLoading(false);
     }
@@ -37,6 +44,9 @@ const LoginPage: React.FC = () => {
         <Card style={{ width: 400, boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
             <Title level={2} style={{ margin: 0 }}>Login</Title>
+            <Typography.Text type="secondary">
+              Welcome back! Please login to your account
+            </Typography.Text>
           </div>
           
           <Form
@@ -64,6 +74,12 @@ const LoginPage: React.FC = () => {
                 placeholder="Password"
               />
             </Form.Item>
+
+            {loginError && (
+              <Form.Item>
+                <Typography.Text type="danger">{loginError}</Typography.Text>
+              </Form.Item>
+            )}
 
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} block>
