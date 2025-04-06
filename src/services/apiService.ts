@@ -28,7 +28,8 @@ const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: true // Enable sending cookies with requests
 });
 
 // List of URLs that don't require authentication
@@ -51,8 +52,10 @@ apiClient.interceptors.request.use(
 
     // Add JSESSIONID to Cookie header if exists
     const jsessionid = localStorage.getItem('JSESSIONID');
+    console.log('Current JSESSIONID in localStorage:', jsessionid);
     if (jsessionid) {
       config.headers.Cookie = `JSESSIONID=${jsessionid}`;
+      console.log('Added JSESSIONID to request header:', config.headers.Cookie);
     }
 
     return config;
@@ -65,18 +68,40 @@ apiClient.interceptors.request.use(
 // Add a response interceptor
 apiClient.interceptors.response.use(
   (response) => {
+    console.log('Response headers:', response.headers);
+    console.log('Set-Cookie header:', response.headers['set-cookie']);
+    
     // Extract JSESSIONID from Set-Cookie header if present
-    const setCookie = response.headers['set-cookie'];
+    const setCookie = response.headers['set-cookie'] as string[] | string | undefined;
     if (setCookie) {
-      const jsessionidMatch = setCookie.find(cookie => cookie.startsWith('JSESSIONID='));
-      if (jsessionidMatch) {
-        const jsessionid = jsessionidMatch.split(';')[0].split('=')[1];
+      console.log('Found Set-Cookie header:', setCookie);
+      let jsessionid: string | undefined;
+      
+      if (Array.isArray(setCookie)) {
+        const jsessionidCookie = setCookie.find(cookie => cookie.startsWith('JSESSIONID='));
+        if (jsessionidCookie) {
+          jsessionid = jsessionidCookie.split(';')[0].split('=')[1];
+        }
+      } else if (typeof setCookie === 'string') {
+        const cookies = setCookie.split(',').map((c: string) => c.trim());
+        const jsessionidCookie = cookies.find((cookie: string) => cookie.startsWith('JSESSIONID='));
+        if (jsessionidCookie) {
+          jsessionid = jsessionidCookie.split(';')[0].split('=')[1];
+        }
+      }
+
+      if (jsessionid) {
+        console.log('Extracted JSESSIONID:', jsessionid);
         localStorage.setItem('JSESSIONID', jsessionid);
+        console.log('Saved JSESSIONID to localStorage');
       }
     }
     return response;
   },
   async (error) => {
+    console.error('Response error:', error);
+    console.log('Error response headers:', error.response?.headers);
+    
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -112,11 +137,13 @@ apiClient.interceptors.response.use(
 export const authService = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
     try {
+      console.log('Starting login process...');
       const response = await apiClient.post<LoginResponse>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
         username,
         password
       });
 
+      console.log('Login response:', response);
       console.log('Login response headers:', response.headers);
       
       // Get JSESSIONID from response headers
@@ -130,13 +157,13 @@ export const authService = {
       if (setCookie) {
         let jsessionid: string | undefined;
         if (Array.isArray(setCookie)) {
-          // If set-cookie is an array
+          console.log('Set-Cookie is array:', setCookie);
           const jsessionidCookie = setCookie.find(cookie => cookie.startsWith('JSESSIONID='));
           if (jsessionidCookie) {
             jsessionid = jsessionidCookie.split(';')[0].split('=')[1];
           }
         } else if (typeof setCookie === 'string') {
-          // If set-cookie is a string
+          console.log('Set-Cookie is string:', setCookie);
           const cookies = setCookie.split(',').map(c => c.trim());
           const jsessionidCookie = cookies.find(cookie => cookie.startsWith('JSESSIONID='));
           if (jsessionidCookie) {
@@ -147,6 +174,7 @@ export const authService = {
         if (jsessionid) {
           console.log('Found JSESSIONID:', jsessionid);
           localStorage.setItem('JSESSIONID', jsessionid);
+          console.log('Saved JSESSIONID to localStorage');
         } else {
           console.log('No JSESSIONID found in cookies');
         }
@@ -206,11 +234,27 @@ export const authService = {
     return response.data;
   },
 
-  logout: () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('JSESSIONID');
+  logout: async () => {
+    try {
+      const jsessionid = localStorage.getItem('JSESSIONID');
+      // Gọi API logout với session id
+      await apiClient.post('/api/auth/logout', null, {
+        headers: {
+          Cookie: `JSESSIONID=${jsessionid}`
+        }
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Xóa tất cả thông tin user trên storage
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('JSESSIONID');
+      
+      // Redirect về trang login
+      window.location.href = '/login';
+    }
   }
 };
 

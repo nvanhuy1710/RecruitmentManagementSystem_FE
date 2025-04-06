@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography } from 'antd';
+import { Form, Input, Button, Card, message, Typography, Space } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from 'antd';
 import { authService } from '../services/apiService';
 
@@ -82,9 +82,14 @@ const LoginPage: React.FC = () => {
             )}
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block>
-                Login
-              </Button>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                <Button type="primary" htmlType="submit" loading={loading} block>
+                  Login
+                </Button>
+                <Link to="/">
+                  <Button block>Về trang chủ</Button>
+                </Link>
+              </Space>
             </Form.Item>
 
             <div style={{ textAlign: 'center' }}>
