@@ -9,8 +9,19 @@ interface LoginResponse {
 
 interface UserInfo {
   username: string;
-  email?: string;
-  fullName?: string;
+  email: string;
+  fullName: string;
+  gender: boolean;
+  birth: string;
+  avatarUrl?: string;
+}
+
+interface UpdateUserPayload {
+  email: string;
+  fullName: string;
+  username: string;
+  birth: string;
+  gender: boolean;
 }
 
 const apiClient = axios.create({
@@ -20,13 +31,30 @@ const apiClient = axios.create({
   }
 });
 
+// List of URLs that don't require authentication
+const publicUrls = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh-token'
+];
+
 // Add a request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Don't add token for public URLs
+    if (config.url && !publicUrls.some(url => config.url?.includes(url))) {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
+
+    // Add JSESSIONID to Cookie header if exists
+    const jsessionid = localStorage.getItem('JSESSIONID');
+    if (jsessionid) {
+      config.headers.Cookie = `JSESSIONID=${jsessionid}`;
+    }
+
     return config;
   },
   (error) => {
@@ -36,16 +64,25 @@ apiClient.interceptors.request.use(
 
 // Add a response interceptor
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Extract JSESSIONID from Set-Cookie header if present
+    const setCookie = response.headers['set-cookie'];
+    if (setCookie) {
+      const jsessionidMatch = setCookie.find(cookie => cookie.startsWith('JSESSIONID='));
+      if (jsessionidMatch) {
+        const jsessionid = jsessionidMatch.split(';')[0].split('=')[1];
+        localStorage.setItem('JSESSIONID', jsessionid);
+      }
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
-    // If the error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        // Try to refresh the token
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           const response = await apiClient.post('/api/auth/refresh-token', {
@@ -56,15 +93,14 @@ apiClient.interceptors.response.use(
           localStorage.setItem('accessToken', accessToken);
           localStorage.setItem('refreshToken', newRefreshToken);
 
-          // Retry the original request with new token
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        // If refresh token fails, logout user
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userInfo');
+        localStorage.removeItem('JSESSIONID');
         window.location.href = '/login';
       }
     }
@@ -81,6 +117,43 @@ export const authService = {
         password
       });
 
+      console.log('Login response headers:', response.headers);
+      
+      // Get JSESSIONID from response headers
+      const allHeaders = response.headers;
+      console.log('All headers:', allHeaders);
+      
+      // Try to get Set-Cookie header
+      const setCookie = allHeaders['set-cookie'] as string[] | string | undefined;
+      console.log('Set-Cookie header:', setCookie);
+      
+      if (setCookie) {
+        let jsessionid: string | undefined;
+        if (Array.isArray(setCookie)) {
+          // If set-cookie is an array
+          const jsessionidCookie = setCookie.find(cookie => cookie.startsWith('JSESSIONID='));
+          if (jsessionidCookie) {
+            jsessionid = jsessionidCookie.split(';')[0].split('=')[1];
+          }
+        } else if (typeof setCookie === 'string') {
+          // If set-cookie is a string
+          const cookies = setCookie.split(',').map(c => c.trim());
+          const jsessionidCookie = cookies.find(cookie => cookie.startsWith('JSESSIONID='));
+          if (jsessionidCookie) {
+            jsessionid = jsessionidCookie.split(';')[0].split('=')[1];
+          }
+        }
+
+        if (jsessionid) {
+          console.log('Found JSESSIONID:', jsessionid);
+          localStorage.setItem('JSESSIONID', jsessionid);
+        } else {
+          console.log('No JSESSIONID found in cookies');
+        }
+      } else {
+        console.log('No Set-Cookie header found');
+      }
+
       const { accessToken, refreshToken } = response.data;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
@@ -91,6 +164,10 @@ export const authService = {
 
       return response.data;
     } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.response) {
+        console.log('Error response headers:', error.response.headers);
+      }
       if (error.response && error.response.status !== 200) {
         throw new Error('Invalid username or password');
       }
@@ -101,6 +178,20 @@ export const authService = {
   getUserInfo: async (): Promise<UserInfo> => {
     const response = await apiClient.get<UserInfo>('/api/account');
     return response.data;
+  },
+
+  updateUserInfo: async (userData: UpdateUserPayload): Promise<UserInfo> => {
+    const response = await apiClient.put<UserInfo>('/api/account', userData);
+    localStorage.setItem('userInfo', JSON.stringify(response.data));
+    return response.data;
+  },
+
+  updateAvatar: async (formData: FormData): Promise<void> => {
+    await apiClient.post('/api/update-avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
 
   register: async (userData: {
@@ -119,6 +210,7 @@ export const authService = {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('JSESSIONID');
   }
 };
 
