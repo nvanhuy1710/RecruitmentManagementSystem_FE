@@ -50,7 +50,7 @@ const ProfilePage: React.FC = () => {
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append('avatar', file);
+      formData.append('file', file);
       await authService.updateAvatar(formData);
       message.success('Avatar updated successfully');
       fetchUserProfile();
