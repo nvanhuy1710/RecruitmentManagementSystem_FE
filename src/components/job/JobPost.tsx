@@ -1,23 +1,100 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Select, InputNumber } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload,Modal } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { jobService } from '../../services/apiService';
+import type { UploadFile } from 'antd/es/upload/interface';
+import dayjs from 'dayjs';
 
 const { TextArea } = Input;
-const { Option } = Select;
+
+interface Industry {
+  id: number;
+  name: string;
+}
+
+interface JobLevel {
+  id: number;
+  name: string;
+}
+
+interface WorkingModel {
+  id: number;
+  name: string;
+}
+
+interface JobArticle {
+  title: string;
+  content: string;
+  requirement: string;
+  address: string;
+  location: string;
+  companyWebsiteUrl: string;
+  fromSalary: number;
+  toSalary: number;
+  dueDate: string;
+  industryId: number;
+  jobLevelId: number;
+  workingModelId: number;
+}
 
 const JobPost: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [industries, setIndustries] = useState<Industry[]>([]);
+  const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
+  const [workingModels, setWorkingModels] = useState<WorkingModel[]>([]);
+  const [form] = Form.useForm();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [industriesData, jobLevelsData, workingModelsData] = await Promise.all([
+          jobService.getIndustries(),
+          jobService.getJobLevels(),
+          jobService.getWorkingModels()
+        ]);
+
+        setIndustries(industriesData);
+        setJobLevels(jobLevelsData);
+        setWorkingModels(workingModelsData);
+      } catch (error) {
+        message.error('Failed to load form data');
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      // TODO: Implement job posting logic
-      console.log('Job posting values:', values);
-      message.success('Job posted successfully!');
-      navigate('/');
-    } catch (error) {
-      message.error('Failed to post job. Please try again.');
+      const article: JobArticle = {
+        title: values.title,
+        content: values.content,
+        requirement: values.requirement,
+        address: values.address,
+        location: values.location,
+        companyWebsiteUrl: values.companyWebsiteUrl,
+        fromSalary: values.fromSalary,
+        toSalary: values.toSalary,
+        dueDate: values.dueDate.startOf('day').toISOString(),
+        industryId: values.industryId,
+        jobLevelId: values.jobLevelId,
+        workingModelId: values.workingModelId
+      };
+
+      const imageFile = values.image?.[0]?.originFileObj;
+
+      const result = await jobService.createJob(article, imageFile);
+      
+      if (result.success) {
+        message.success('Post Article Successful');
+        navigate('/');
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to post job. Please try again.';
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -25,8 +102,9 @@ const JobPost: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '20px' }}>
-      <Card title="Post a Job" bordered={false}>
+      <Card title="Post a New Job">
         <Form
+          form={form}
           name="jobPost"
           onFinish={onFinish}
           layout="vertical"
@@ -40,68 +118,143 @@ const JobPost: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="company"
-            label="Company Name"
-            rules={[{ required: true, message: 'Please input the company name!' }]}
+            name="content"
+            label="Job Description"
+            rules={[{ required: true, message: 'Please input the job description!' }]}
           >
-            <Input placeholder="Enter company name" />
+            <TextArea rows={6} placeholder="Enter detailed job description" />
+          </Form.Item>
+
+          <Form.Item
+            name="requirement"
+            label="Job Requirements"
+            rules={[{ required: true, message: 'Please input the job requirements!' }]}
+          >
+            <TextArea rows={6} placeholder="Enter job requirements (e.g., skills, experience, qualifications)" />
+          </Form.Item>
+
+          <Form.Item
+            name="address"
+            label="Address"
+            rules={[{ message: 'Please input the address!' }]}
+          >
+            <Input placeholder="Enter work address" />
           </Form.Item>
 
           <Form.Item
             name="location"
             label="Location"
-            rules={[{ required: true, message: 'Please input the job location!' }]}
+            rules={[{ message: 'Please input the location!' }]}
           >
-            <Input placeholder="Enter job location" />
+            <Input placeholder="Enter location (e.g., Ho Chi Minh City)" />
           </Form.Item>
 
           <Form.Item
-            name="salary"
-            label="Salary Range"
-            rules={[{ required: true, message: 'Please input the salary range!' }]}
+            name="companyWebsiteUrl"
+            label="Company Website"
+            rules={[
+              { message: 'Please input the company website!' },
+              { type: 'url', message: 'Please enter a valid URL!' }
+            ]}
           >
-            <Input placeholder="Enter salary range (e.g., $50,000 - $70,000)" />
+            <Input placeholder="Enter company website URL" />
+          </Form.Item>
+
+          <Form.Item label="Salary Range" style={{ marginBottom: 0 }}>
+            <Form.Item
+              name="fromSalary"
+              style={{ display: 'inline-block', width: 'calc(50% - 12px)' }}
+            >
+              <InputNumber
+                placeholder="From"
+                style={{ width: '100%' }}
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+              />
+            </Form.Item>
+            <span style={{ display: 'inline-block', width: '24px', textAlign: 'center' }}>-</span>
+            <Form.Item
+              name="toSalary"
+              style={{ display: 'inline-block', width: 'calc(50% - 12px)' }}
+            >
+              <InputNumber
+                placeholder="To"
+                style={{ width: '100%' }}
+                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={value => value!.replace(/\$\s?|(,*)/g, '')}
+              />
+            </Form.Item>
           </Form.Item>
 
           <Form.Item
-            name="type"
-            label="Job Type"
-            rules={[{ required: true, message: 'Please select the job type!' }]}
+            name="dueDate"
+            label="Due Date"
+            rules={[{ required: true, message: 'Please select the due date!' }]}
           >
-            <Select placeholder="Select job type">
-              <Option value="full-time">Full-time</Option>
-              <Option value="part-time">Part-time</Option>
-              <Option value="contract">Contract</Option>
-              <Option value="internship">Internship</Option>
+            <DatePicker style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
+            name="industryId"
+            label="Industry"
+            rules={[{ required: true, message: 'Please select the industry!' }]}
+          >
+            <Select placeholder="Select industry">
+              {industries.map(industry => (
+                <Select.Option key={industry.id} value={industry.id}>
+                  {industry.name}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
           <Form.Item
-            name="experience"
-            label="Experience Level"
-            rules={[{ required: true, message: 'Please select the experience level!' }]}
+            name="jobLevelId"
+            label="Job Level"
+            rules={[{ required: true, message: 'Please select the job level!' }]}
           >
-            <Select placeholder="Select experience level">
-              <Option value="entry">Entry Level</Option>
-              <Option value="mid">Mid Level</Option>
-              <Option value="senior">Senior Level</Option>
+            <Select placeholder="Select job level">
+              {jobLevels.map(level => (
+                <Select.Option key={level.id} value={level.id}>
+                  {level.name}
+                </Select.Option>
+              ))}
             </Select>
           </Form.Item>
 
           <Form.Item
-            name="description"
-            label="Job Description"
-            rules={[{ required: true, message: 'Please input the job description!' }]}
+            name="workingModelId"
+            label="Working Model"
+            rules={[{ required: true, message: 'Please select the working model!' }]}
           >
-            <TextArea rows={6} placeholder="Enter job description" />
+            <Select placeholder="Select working model">
+              {workingModels.map(model => (
+                <Select.Option key={model.id} value={model.id}>
+                  {model.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
-            name="requirements"
-            label="Requirements"
-            rules={[{ required: true, message: 'Please input the job requirements!' }]}
+            name="image"
+            label="Image"
+            valuePropName="fileList"
+            getValueFromEvent={e => {
+              if (Array.isArray(e)) {
+                return e;
+              }
+              return e?.fileList;
+            }}
           >
-            <TextArea rows={6} placeholder="Enter job requirements" />
+            <Upload
+              beforeUpload={() => false}
+              maxCount={1}
+              listType="picture"
+              accept="image/*"
+            >
+              <Button icon={<UploadOutlined />}>Click to upload</Button>
+            </Upload>
           </Form.Item>
 
           <Form.Item>

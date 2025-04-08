@@ -190,7 +190,6 @@ const ProfilePage: React.FC = () => {
             <Form.Item
               name="birth"
               label="Birth Date"
-              rules={[{ required: true, message: 'Please select your birth date!' }]}
             >
               <DatePicker
                 style={{ width: '100%' }}

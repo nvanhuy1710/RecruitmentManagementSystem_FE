@@ -24,6 +24,21 @@ interface UpdateUserPayload {
   gender: boolean;
 }
 
+interface JobArticle {
+  title: string;
+  content: string;
+  requirement: string;
+  address: string;
+  location: string;
+  companyWebsiteUrl: string;
+  fromSalary: number;
+  toSalary: number;
+  dueDate: string;
+  industryId: number;
+  jobLevelId: number;
+  workingModelId: number;
+}
+
 const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   headers: {
@@ -284,9 +299,63 @@ export const jobService = {
     return response.data;
   },
 
-  createJob: async (jobData: any) => {
-    const response = await apiClient.post(API_CONFIG.ENDPOINTS.JOB.CREATE, jobData);
+  getIndustries: async () => {
+    const response = await apiClient.get('/api/industries/all');
     return response.data;
+  },
+
+  getJobLevels: async () => {
+    const response = await apiClient.get('/api/job-levels/all');
+    return response.data;
+  },
+
+  getWorkingModels: async () => {
+    const response = await apiClient.get('/api/working-models/all');
+    return response.data;
+  },
+
+  createJob: async (article: JobArticle, image?: File) => {
+    try {
+      const formData = new FormData();
+
+      // Đảm bảo dueDate là instant format với giờ 00:00:00
+      const articleData = {
+        ...article,
+        dueDate: new Date(article.dueDate.split('T')[0] + 'T00:00:00.000Z').toISOString()
+      };
+
+      const articleBlob = new Blob([JSON.stringify(articleData)], {
+        type: 'application/json'
+      });
+
+      formData.append('article', articleBlob, 'article.json');
+
+      if (image) {
+        formData.append('image', image);
+      }
+
+      const response = await apiClient.post(API_CONFIG.ENDPOINTS.JOB.CREATE, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      // Kiểm tra status code
+      if (response.status === 201) {
+        return {
+          success: true,
+          message: 'Post Article Successful'
+        };
+      }
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Create job error:', error);
+      if (error.response) {
+        console.log('Error response:', error.response.data);
+      }
+      throw error;
+    }
   },
 
   updateJob: async (id: string, jobData: any) => {
@@ -299,5 +368,10 @@ export const jobService = {
     const url = API_CONFIG.ENDPOINTS.JOB.DELETE.replace(':id', id);
     const response = await apiClient.delete(url);
     return response.data;
-  }
+  },
+
+  getMyArticles: async () => {
+    const response = await apiClient.get(API_CONFIG.ENDPOINTS.JOB.MY_ARTICLES);
+    return response.data;
+  },
 }; 

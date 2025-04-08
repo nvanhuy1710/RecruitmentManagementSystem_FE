@@ -51,56 +51,36 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AntHeader className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <div style={{ marginRight: '24px', display: 'flex', alignItems: 'center' }}>
-          <Avatar
-            style={{
-              backgroundColor: '#1890ff',
-              marginRight: '12px'
-            }}
-            icon={<UserOutlined />}
-          />
-          <Link to="/" style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>
-            Job Portal
-          </Link>
-        </div>
-        <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
-          <Menu.Item key="1">
-            <Link to="/">Home</Link>
-          </Menu.Item>
-          <Menu.Item key="2">
-            <Link to="/job-post">Post Job</Link>
-          </Menu.Item>
-        </Menu>
+    <AntHeader style={{ padding: '0 50px', display: 'flex', justifyContent: 'space-between' }}>
+      <div className="logo">
+        <Link to="/">Recruitment System</Link>
       </div>
       <Space>
         {userInfo ? (
-          <Dropdown menu={userMenu} placement="bottomRight">
-            <Button type="text" style={{ color: 'white' }}>
-              <Space>
-                <Avatar size="small" icon={<UserOutlined />} />
-                {userInfo.username}
-                <DownOutlined />
-              </Space>
+          <>
+            <Button type="primary">
+              <Link to="/job-post">Post Job</Link>
             </Button>
-          </Dropdown>
+            <Button>
+              <Link to="/my-job-posts">My Job Posts</Link>
+            </Button>
+            <Dropdown menu={userMenu} placement="bottomRight">
+              <Button type="text" style={{ color: 'white' }}>
+                <Space>
+                  <Avatar size="small" icon={<UserOutlined />} />
+                  {userInfo.username}
+                  <DownOutlined />
+                </Space>
+              </Button>
+            </Dropdown>
+          </>
         ) : (
           <>
-            <Button 
-              type="text" 
-              icon={<LoginOutlined />} 
-              style={{ color: 'white' }} 
-              onClick={() => navigate('/login')}
-            >
-              Login
+            <Button type="link">
+              <Link to="/login">Login</Link>
             </Button>
-            <Button 
-              type="primary" 
-              icon={<UserAddOutlined />} 
-              onClick={() => navigate('/register')}
-            >
-              Register
+            <Button type="primary">
+              <Link to="/register">Register</Link>
             </Button>
           </>
         )}

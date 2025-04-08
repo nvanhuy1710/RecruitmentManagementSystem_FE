@@ -13,7 +13,8 @@ export const API_CONFIG = {
     JOB: {
       LIST: '/api/jobs',
       DETAIL: '/api/jobs/:id',
-      CREATE: '/api/jobs/create',
+      CREATE: '/api/articles',
+      MY_ARTICLES: '/api/articles',
       UPDATE: '/api/jobs/:id/update',
       DELETE: '/api/jobs/:id/delete'
     }
