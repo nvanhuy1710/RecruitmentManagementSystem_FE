@@ -11,7 +11,6 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       // TODO: Implement login logic
-      console.log('Login values:', values);
       message.success('Login successful!');
       navigate('/');
     } catch (error) {

@@ -11,7 +11,7 @@ const { Title, Text } = Typography;
 const HomePage: React.FC = () => {
   return (
     <Layout>
-      <Header />
+      {/* <Header /> */}
       <Content>
         {/* Hero Section */}
         <div style={{ 

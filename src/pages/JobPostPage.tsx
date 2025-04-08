@@ -9,7 +9,7 @@ const { Content } = Layout;
 const JobPostPage: React.FC = () => {
   return (
     <Layout>
-      <Header />
+      {/* <Header /> */}
       <Content style={{ minHeight: 'calc(100vh - 64px - 70px)', background: '#f0f2f5' }}>
         <JobPost />
       </Content>

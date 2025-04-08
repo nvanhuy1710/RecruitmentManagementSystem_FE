@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import JobPostPage from './pages/JobPostPage';
 import ProfilePage from './pages/ProfilePage';
 import MyJobPostsPage from './pages/MyJobPostsPage';
+import MainLayout from './components/layout/MainLayout';
 
 import './App.css';
 
@@ -17,12 +18,28 @@ const App: React.FC = () => {
     <ConfigProvider locale={enUS}>
       <Router>
         <Routes>
-          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/job-post" element={<JobPostPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/my-job-posts" element={<MyJobPostsPage />} />
+          <Route path="/" element={
+            <MainLayout>
+              <HomePage />
+            </MainLayout>
+          } />
+          <Route path="/job-post" element={
+            <MainLayout>
+              <JobPostPage />
+            </MainLayout>
+          } />
+          <Route path="/profile" element={
+            <MainLayout>
+              <ProfilePage />
+            </MainLayout>
+          } />
+          <Route path="/my-job-posts" element={
+            <MainLayout>
+              <MyJobPostsPage />
+            </MainLayout>
+          } />
         </Routes>
       </Router>
     </ConfigProvider>

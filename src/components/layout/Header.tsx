@@ -48,28 +48,33 @@ const Header: React.FC = () => {
   };
 
   return (
-    <AntHeader style={{ padding: '0 50px', display: 'flex', justifyContent: 'space-between' }}>
+    <AntHeader style={{ 
+      padding: '0 50px', 
+      display: 'flex', 
+      justifyContent: 'space-between',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 1000,
+      height: 64,
+      lineHeight: '64px',
+      background: '#ffffff',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+    }}>
       <div className="logo">
-        <Link to="/">Recruitment System</Link>
+        <Link to="/" style={{ color: '#1890ff' }}>Recruitment System</Link>
       </div>
       <Space>
         {isAuthenticated ? (
-          <>
-            <Button type="primary">
-              <Link to="/job-post">Post Job</Link>
+          <Dropdown menu={userMenu} placement="bottomRight">
+            <Button type="text" style={{ color: '#1890ff' }}>
+              <Space>
+                <Avatar size="small" icon={<UserOutlined />} />
+                <DownOutlined />
+              </Space>
             </Button>
-            <Button>
-              <Link to="/my-job-posts">My Job Posts</Link>
-            </Button>
-            <Dropdown menu={userMenu} placement="bottomRight">
-              <Button type="text" style={{ color: 'white' }}>
-                <Space>
-                  <Avatar size="small" icon={<UserOutlined />} />
-                  <DownOutlined />
-                </Space>
-              </Button>
-            </Dropdown>
-          </>
+          </Dropdown>
         ) : (
           <>
             <Button type="link">

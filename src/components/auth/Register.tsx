@@ -10,8 +10,6 @@ const Register: React.FC = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      // TODO: Implement registration logic
-      console.log('Registration values:', values);
       message.success('Registration successful!');
       navigate('/login');
     } catch (error) {

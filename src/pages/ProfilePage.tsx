@@ -100,7 +100,7 @@ const ProfilePage: React.FC = () => {
 
   return (
     <Layout>
-      <Header />
+      {/* <Header /> */}
       <Content style={{ 
         minHeight: '100vh',
         padding: '24px',

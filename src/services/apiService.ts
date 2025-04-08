@@ -30,7 +30,7 @@ interface JobArticle {
   requirement: string;
   address: string;
   location: string;
-  companyWebsiteUrl: string;
+  company: string;
   fromSalary: number;
   toSalary: number;
   dueDate: string;
@@ -67,10 +67,8 @@ apiClient.interceptors.request.use(
 
     // Add JSESSIONID to Cookie header if exists
     const jsessionid = localStorage.getItem('JSESSIONID');
-    console.log('Current JSESSIONID in localStorage:', jsessionid);
     if (jsessionid) {
       config.headers.Cookie = `JSESSIONID=${jsessionid}`;
-      console.log('Added JSESSIONID to request header:', config.headers.Cookie);
     }
 
     return config;
@@ -83,13 +81,10 @@ apiClient.interceptors.request.use(
 // Add a response interceptor
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('Response headers:', response.headers);
-    console.log('Set-Cookie header:', response.headers['set-cookie']);
     
     // Extract JSESSIONID from Set-Cookie header if present
     const setCookie = response.headers['set-cookie'] as string[] | string | undefined;
     if (setCookie) {
-      console.log('Found Set-Cookie header:', setCookie);
       let jsessionid: string | undefined;
       
       if (Array.isArray(setCookie)) {
@@ -106,16 +101,13 @@ apiClient.interceptors.response.use(
       }
 
       if (jsessionid) {
-        console.log('Extracted JSESSIONID:', jsessionid);
         localStorage.setItem('JSESSIONID', jsessionid);
-        console.log('Saved JSESSIONID to localStorage');
       }
     }
     return response;
   },
   async (error) => {
     console.error('Response error:', error);
-    console.log('Error response headers:', error.response?.headers);
     
     const originalRequest = error.config;
 
@@ -152,33 +144,25 @@ apiClient.interceptors.response.use(
 export const authService = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
     try {
-      console.log('Starting login process...');
       const response = await apiClient.post<LoginResponse>(API_CONFIG.ENDPOINTS.AUTH.LOGIN, {
         username,
         password
       });
-
-      console.log('Login response:', response);
-      console.log('Login response headers:', response.headers);
       
       // Get JSESSIONID from response headers
       const allHeaders = response.headers;
-      console.log('All headers:', allHeaders);
       
       // Try to get Set-Cookie header
       const setCookie = allHeaders['set-cookie'] as string[] | string | undefined;
-      console.log('Set-Cookie header:', setCookie);
       
       if (setCookie) {
         let jsessionid: string | undefined;
         if (Array.isArray(setCookie)) {
-          console.log('Set-Cookie is array:', setCookie);
           const jsessionidCookie = setCookie.find(cookie => cookie.startsWith('JSESSIONID='));
           if (jsessionidCookie) {
             jsessionid = jsessionidCookie.split(';')[0].split('=')[1];
           }
         } else if (typeof setCookie === 'string') {
-          console.log('Set-Cookie is string:', setCookie);
           const cookies = setCookie.split(',').map(c => c.trim());
           const jsessionidCookie = cookies.find(cookie => cookie.startsWith('JSESSIONID='));
           if (jsessionidCookie) {
@@ -187,14 +171,8 @@ export const authService = {
         }
 
         if (jsessionid) {
-          console.log('Found JSESSIONID:', jsessionid);
           localStorage.setItem('JSESSIONID', jsessionid);
-          console.log('Saved JSESSIONID to localStorage');
-        } else {
-          console.log('No JSESSIONID found in cookies');
         }
-      } else {
-        console.log('No Set-Cookie header found');
       }
 
       const { accessToken, refreshToken } = response.data;
@@ -207,10 +185,6 @@ export const authService = {
 
       return response.data;
     } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.response) {
-        console.log('Error response headers:', error.response.headers);
-      }
       if (error.response && error.response.status !== 200) {
         throw new Error('Invalid username or password');
       }
@@ -351,9 +325,6 @@ export const jobService = {
       return response.data;
     } catch (error: any) {
       console.error('Create job error:', error);
-      if (error.response) {
-        console.log('Error response:', error.response.data);
-      }
       throw error;
     }
   },
@@ -370,9 +341,9 @@ export const jobService = {
     return response.data;
   },
 
-  getMyArticles: async () => {
-    const response = await apiClient.get(API_CONFIG.ENDPOINTS.JOB.MY_ARTICLES);
-    return response.data;
+  getMyArticles: async (page: number = 0, size: number = 10) => {
+    const response = await apiClient.get(`/api/articles?page=${page}&size=${size}`);
+    return response;
   },
 };
 

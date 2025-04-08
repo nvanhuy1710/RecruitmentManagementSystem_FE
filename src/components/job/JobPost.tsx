@@ -29,7 +29,7 @@ interface JobArticle {
   requirement: string;
   address: string;
   location: string;
-  companyWebsiteUrl: string;
+  company: string;
   fromSalary: number;
   toSalary: number;
   dueDate: string;
@@ -75,7 +75,7 @@ const JobPost: React.FC = () => {
         requirement: values.requirement,
         address: values.address,
         location: values.location,
-        companyWebsiteUrl: values.companyWebsiteUrl,
+        company: values.company,
         fromSalary: values.fromSalary,
         toSalary: values.toSalary,
         dueDate: values.dueDate.startOf('day').toISOString(),
@@ -109,28 +109,44 @@ const JobPost: React.FC = () => {
           onFinish={onFinish}
           layout="vertical"
         >
+
+          <Form.Item
+            name="image"
+            label="Image"
+            valuePropName="fileList"
+            getValueFromEvent={e => {
+              if (Array.isArray(e)) {
+                return e;
+              }
+              return e?.fileList;
+            }}
+          >
+            <Upload
+              beforeUpload={() => false}
+              maxCount={1}
+              listType="picture"
+              accept="image/*"
+            >
+              <Button icon={<UploadOutlined />}>Click to upload</Button>
+            </Upload>
+          </Form.Item>
+
           <Form.Item
             name="title"
-            label="Job Title"
-            rules={[{ required: true, message: 'Please input the job title!' }]}
+            label="Title"
+            rules={[{ required: true, message: 'Please input the title!' }]}
           >
-            <Input placeholder="Enter job title" />
+            <Input placeholder="Enter title" />
           </Form.Item>
 
           <Form.Item
-            name="content"
-            label="Job Description"
-            rules={[{ required: true, message: 'Please input the job description!' }]}
+            name="company"
+            label="Company"
+            rules={[
+              { required: true, message: 'Please input the company name!' }
+            ]}
           >
-            <TextArea rows={6} placeholder="Enter detailed job description" />
-          </Form.Item>
-
-          <Form.Item
-            name="requirement"
-            label="Job Requirements"
-            rules={[{ required: true, message: 'Please input the job requirements!' }]}
-          >
-            <TextArea rows={6} placeholder="Enter job requirements (e.g., skills, experience, qualifications)" />
+            <Input placeholder="Enter company name" />
           </Form.Item>
 
           <Form.Item
@@ -147,17 +163,6 @@ const JobPost: React.FC = () => {
             rules={[{ message: 'Please input the location!' }]}
           >
             <Input placeholder="Enter location (e.g., Ho Chi Minh City)" />
-          </Form.Item>
-
-          <Form.Item
-            name="companyWebsiteUrl"
-            label="Company Website"
-            rules={[
-              { message: 'Please input the company website!' },
-              { type: 'url', message: 'Please enter a valid URL!' }
-            ]}
-          >
-            <Input placeholder="Enter company website URL" />
           </Form.Item>
 
           <Form.Item label="Salary Range" style={{ marginBottom: 0 }}>
@@ -237,24 +242,19 @@ const JobPost: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="image"
-            label="Image"
-            valuePropName="fileList"
-            getValueFromEvent={e => {
-              if (Array.isArray(e)) {
-                return e;
-              }
-              return e?.fileList;
-            }}
+            name="content"
+            label="Job Description"
+            rules={[{ required: true, message: 'Please input the job description!' }]}
           >
-            <Upload
-              beforeUpload={() => false}
-              maxCount={1}
-              listType="picture"
-              accept="image/*"
-            >
-              <Button icon={<UploadOutlined />}>Click to upload</Button>
-            </Upload>
+            <TextArea rows={6} placeholder="Enter detailed job description" />
+          </Form.Item>
+
+          <Form.Item
+            name="requirement"
+            label="Job Requirements"
+            rules={[{ required: true, message: 'Please input the job requirements!' }]}
+          >
+            <TextArea rows={6} placeholder="Enter job requirements (e.g., skills, experience, qualifications)" />
           </Form.Item>
 
           <Form.Item>
