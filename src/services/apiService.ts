@@ -374,4 +374,13 @@ export const jobService = {
     const response = await apiClient.get(API_CONFIG.ENDPOINTS.JOB.MY_ARTICLES);
     return response.data;
   },
+};
+
+export const checkAuth = async () => {
+  try {
+    const response = await apiClient.get('/api/account');
+    return response.status === 200;
+  } catch (error) {
+    return false;
+  }
 }; 

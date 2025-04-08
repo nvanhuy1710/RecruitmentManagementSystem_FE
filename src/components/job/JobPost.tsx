@@ -168,7 +168,7 @@ const JobPost: React.FC = () => {
               <InputNumber
                 placeholder="From"
                 style={{ width: '100%' }}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                formatter={value => `$${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={value => value!.replace(/\$\s?|(,*)/g, '')}
               />
             </Form.Item>
@@ -180,7 +180,7 @@ const JobPost: React.FC = () => {
               <InputNumber
                 placeholder="To"
                 style={{ width: '100%' }}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                formatter={value => `$${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={value => value!.replace(/\$\s?|(,*)/g, '')}
               />
             </Form.Item>

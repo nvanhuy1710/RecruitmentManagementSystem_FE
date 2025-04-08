@@ -67,7 +67,7 @@ const MyJobPostsPage: React.FC = () => {
                     description={
                       <>
                         <Tag color="blue">{article.location}</Tag>
-                        <Tag color="green">{`${article.fromSalary} - ${article.toSalary}`}</Tag>
+                        <Tag color="green">{`$${article.fromSalary} - $${article.toSalary}`}</Tag>
                         <Tag color="orange">{article.status}</Tag>
                       </>
                     }

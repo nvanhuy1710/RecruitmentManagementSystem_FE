@@ -1,53 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import { Layout, Menu, Button, Space, Avatar, Dropdown } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Button, Space, Dropdown, Avatar, message } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserOutlined, LogoutOutlined, LoginOutlined, UserAddOutlined, DownOutlined } from '@ant-design/icons';
-import { authService } from '../../services/apiService';
+import { UserOutlined, DownOutlined } from '@ant-design/icons';
+import { checkAuth, authService } from '../../services/apiService';
 
 const { Header: AntHeader } = Layout;
 
-interface UserInfo {
-  username: string;
-  email?: string;
-  fullName?: string;
-}
-
 const Header: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
-    const storedUserInfo = localStorage.getItem('userInfo');
-    if (storedUserInfo) {
-      setUserInfo(JSON.parse(storedUserInfo));
-    }
+    const verifyAuth = async () => {
+      const isAuth = await checkAuth();
+      setIsAuthenticated(isAuth);
+    };
+    verifyAuth();
   }, []);
 
-  const handleLogout = () => {
-    authService.logout();
-    setUserInfo(null);
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('JSESSIONID');
+      setIsAuthenticated(false);
+      navigate('/login');
+      message.success('Logged out successfully');
+    } catch (error) {
+      message.error('Failed to logout');
+    }
   };
 
   const userMenu = {
     items: [
       {
         key: 'profile',
-        icon: <UserOutlined />,
-        label: 'Profile'
+        label: <Link to="/profile">Profile</Link>,
       },
       {
         key: 'logout',
-        icon: <LogoutOutlined />,
-        label: 'Logout'
-      }
+        label: 'Logout',
+        onClick: handleLogout,
+      },
     ],
-    onClick: ({ key }: { key: string }) => {
-      if (key === 'logout') {
-        handleLogout();
-      } else if (key === 'profile') {
-        navigate('/profile');
-      }
-    }
   };
 
   return (
@@ -56,7 +53,7 @@ const Header: React.FC = () => {
         <Link to="/">Recruitment System</Link>
       </div>
       <Space>
-        {userInfo ? (
+        {isAuthenticated ? (
           <>
             <Button type="primary">
               <Link to="/job-post">Post Job</Link>
@@ -68,7 +65,6 @@ const Header: React.FC = () => {
               <Button type="text" style={{ color: 'white' }}>
                 <Space>
                   <Avatar size="small" icon={<UserOutlined />} />
-                  {userInfo.username}
                   <DownOutlined />
                 </Space>
               </Button>
