@@ -341,9 +341,64 @@ export const jobService = {
     return response.data;
   },
 
-  getMyArticles: async (page: number = 0, size: number = 10) => {
-    const response = await apiClient.get(`/api/articles?page=${page}&size=${size}`);
-    return response;
+  getMyArticles: async (page: number, size: number) => {
+    try {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}/api/articles`, {
+        params: { page, size },
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getArticleById: async (id: number) => {
+    try {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}/api/articles/${id}`, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateArticle: async (id: number, data: any) => {
+    try {
+      const response = await axios.put(`${API_CONFIG.BASE_URL}/api/articles/${id}`, data, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateArticleImage: async (id: number, image: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', image);
+
+      const response = await axios.put(`${API_CONFIG.BASE_URL}/api/articles/${id}/update-image`, formData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
   },
 };
 
@@ -354,4 +409,6 @@ export const checkAuth = async () => {
   } catch (error) {
     return false;
   }
-}; 
+};
+
+export default jobService; 

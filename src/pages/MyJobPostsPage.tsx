@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Typography, Space, message, Tag } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { jobService } from '../services/apiService';
 import MainLayout from '../components/layout/MainLayout';
+import dayjs from 'dayjs';
 
 const { Title } = Typography;
 
@@ -30,6 +31,7 @@ const MyJobPostsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchArticles();
@@ -56,9 +58,6 @@ const MyJobPostsPage: React.FC = () => {
       key: 'title',
       width: '20%',
       align: 'center' as const,
-      render: (text: string, record: Article) => (
-        <Link to={`/job-post/${record.id}`}>{text}</Link>
-      ),
     },
     {
       title: 'Company',
@@ -98,7 +97,7 @@ const MyJobPostsPage: React.FC = () => {
       key: 'dueDate',
       width: '15%',
       align: 'center' as const,
-      render: (date: string) => date ? new Date(date).toLocaleDateString() : '',
+      render: (date: number) => date ? dayjs.unix(date).format('DD/MM/YYYY') : '',
     },
     {
       title: 'Action',
@@ -115,8 +114,7 @@ const MyJobPostsPage: React.FC = () => {
   ];
 
   const handleEdit = (id: number) => {
-    // TODO: Implement edit functionality
-    console.log('Edit article:', id);
+    navigate(`/job-post/${id}`);
   };
 
   const handleDelete = (id: number) => {

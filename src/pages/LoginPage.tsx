@@ -87,7 +87,7 @@ const LoginPage: React.FC = () => {
                   Login
                 </Button>
                 <Link to="/">
-                  <Button block>Về trang chủ</Button>
+                  <Button block>Homepage</Button>
                 </Link>
               </Space>
             </Form.Item>
