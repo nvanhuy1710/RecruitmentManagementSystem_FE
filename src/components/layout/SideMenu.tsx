@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, Button, Layout } from 'antd';
-import { MenuFoldOutlined, MenuUnfoldOutlined, FileTextOutlined, FileAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { UploadOutlined, MenuFoldOutlined, MenuUnfoldOutlined, FileTextOutlined, FileAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HomeOutlined,
@@ -44,6 +44,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ collapsed, onCollapse }) => {
         key: '/my-job-posts',
         icon: <FileTextOutlined />,
         label: <Link to="/my-job-posts">My Job Posts</Link>,
+      },
+      {
+        key: '/my-applications',
+        icon: <UploadOutlined />,
+        label: <Link to="/my-applications">My Applications</Link>,
       },
       {
         key: '/review-articles',

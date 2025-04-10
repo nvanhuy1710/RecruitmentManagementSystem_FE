@@ -17,6 +17,8 @@ import './App.css';
 import ProfilePage from './pages/ProfilePage';
 import ViewArticlePage from './pages/ViewArticlePage';
 import ApplyJobPage from './pages/ApplyJobPage';
+import MyApplicationsPage from './pages/MyApplicationsPage';
+import ApplicationDetailPage from './pages/ApplicationDetailPage';
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
               <Route path="review-article/:id" element={<ReviewArticleDetailPage />} />
               <Route path="view-article/:id" element={<ViewArticlePage />} />
               <Route path="/apply-job/:id" element={<ApplyJobPage />} />
+              <Route path="my-applications" element={<MyApplicationsPage />} />
+              <Route path="/application/:id" element={<ApplicationDetailPage />} />
             </Route>
           </Routes>
         </Router>

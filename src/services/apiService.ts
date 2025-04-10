@@ -359,7 +359,7 @@ export const jobService = {
   getMyArticles: async (page: number, size: number) => {
     try {
       const response = await axios.get(`${API_CONFIG.BASE_URL}/api/articles`, {
-        params: { page, size },
+        params: { page, size, sort: 'id,desc' },
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
@@ -420,7 +420,8 @@ export const jobService = {
     const response = await apiClient.get(`${API_CONFIG.BASE_URL}/api/admin-articles/pending-approve`, {
       params: {
         page,
-        size
+        size,
+        sort: 'id,desc'
       },
       withCredentials: true
     });
@@ -472,6 +473,28 @@ export const applicantService = {
       throw error;
     }
   },
+};
+
+export const getApplicants = async (page: number, size: number) => {
+  try {
+    const response = await apiClient.get('/api/applicants', {
+      params: { page, size, sort: 'id,desc' },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching applicants:', error);
+    throw error;
+  }
+};
+
+export const getApplicationById = async (id: string) => {
+  try {
+    const response = await apiClient.get(`/api/applicants/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching application details:', error);
+    throw error;
+  }
 };
 
 export default jobService; 

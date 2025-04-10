@@ -64,6 +64,9 @@ const ViewArticlePage: React.FC = () => {
     navigate(`/apply-job/${id}`);
   };
 
+  const isOverDue = article && dayjs.unix(article.dueDate).isBefore(dayjs().startOf('day'), 'second');
+  console.log("day:  " + dayjs())
+
   return (
     <div style={{ maxWidth: '800px', margin: '24px auto', padding: '0 24px' }}>
       <Card>
@@ -90,7 +93,8 @@ const ViewArticlePage: React.FC = () => {
 
         {/* Title Section */}
         <Title level={2} style={{ textAlign: 'center', marginBottom: '24px' }}>
-          {article.title}
+          {article.title}<br></br>
+          {isOverDue && <Typography.Text type="danger" style={{ fontSize: '20px' }}>Over due</Typography.Text>}
         </Title>
 
         {/* Company Info Section */}
@@ -129,7 +133,9 @@ const ViewArticlePage: React.FC = () => {
             </Space>
             <Space>
               <CalendarOutlined />
-              <Text>Due date: {article.dueDate ? dayjs.unix(article.dueDate).format('DD/MM/YYYY') : 'Not specified'}</Text>
+              <Text style={{ color: isOverDue ? 'red' : 'inherit' }}>
+                Due date: {article.dueDate ? dayjs.unix(article.dueDate).format('DD/MM/YYYY') : 'Not specified'}
+              </Text>
             </Space>
           </Space>
         </div>
