@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Typography, Space, message, Tag } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { jobService } from '../services/apiService';
-import MainLayout from '../components/layout/MainLayout';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -19,18 +18,19 @@ interface Article {
   company: string;
   fromSalary: number;
   toSalary: number;
-  dueDate: string;
+  dueDate: number;
   mainImageUrl?: string;
   status: string;
   createdAt: string;
 }
 
-const MyJobPostsPage: React.FC = () => {
+const ReviewArticlesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [articles, setArticles] = useState<Article[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+  const [loadingActions, setLoadingActions] = useState<{[key: number]: {approve: boolean, reject: boolean}}>({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const MyJobPostsPage: React.FC = () => {
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await jobService.getMyArticles(currentPage - 1, pageSize);
+      const response = await jobService.getPendingArticles(currentPage - 1, pageSize);
       setArticles(response.data);
       setTotal(parseInt(response.headers['x-total-count'] || '0'));
     } catch (error: any) {
@@ -49,6 +49,36 @@ const MyJobPostsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApprove = async (id: number) => {
+    try {
+      setLoadingActions(prev => ({...prev, [id]: {...prev[id], approve: true}}));
+      await jobService.approveArticle(id);
+      message.success('Article approved successfully');
+      fetchArticles();
+    } catch (error) {
+      message.error('Failed to approve article');
+    } finally {
+      setLoadingActions(prev => ({...prev, [id]: {...prev[id], approve: false}}));
+    }
+  };
+
+  const handleReject = async (id: number) => {
+    try {
+      setLoadingActions(prev => ({...prev, [id]: {...prev[id], reject: true}}));
+      await jobService.rejectArticle(id);
+      message.success('Article rejected successfully');
+      fetchArticles();
+    } catch (error) {
+      message.error('Failed to reject article');
+    } finally {
+      setLoadingActions(prev => ({...prev, [id]: {...prev[id], reject: false}}));
+    }
+  };
+
+  const handleRowClick = (record: Article) => {
+    navigate(`/review-article/${record.id}`);
   };
 
   const columns = [
@@ -106,39 +136,51 @@ const MyJobPostsPage: React.FC = () => {
     {
       title: 'Action',
       key: 'action',
-      width: '10%',
+      width: '15%',
       align: 'center' as const,
       render: (_: any, record: Article) => (
         <Space size="middle">
-          <Button type="link" onClick={() => handleEdit(record.id)}>Edit</Button>
-          {/* <Button type="link" danger onClick={() => handleDelete(record.id)}>Delete</Button> */}
+          <Button 
+            type="primary" 
+            icon={<CheckOutlined />} 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleApprove(record.id);
+            }}
+            loading={loadingActions[record.id]?.approve}
+          >
+            Approve
+          </Button>
+          <Button 
+            danger 
+            icon={<CloseOutlined />} 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleReject(record.id);
+            }}
+            loading={loadingActions[record.id]?.reject}
+          >
+            Reject
+          </Button>
         </Space>
       ),
     },
   ];
 
-  const handleEdit = (id: number) => {
-    navigate(`/job-post/${id}`);
-  };
-
-  const handleDelete = (id: number) => {
-    // TODO: Implement delete functionality
-    console.log('Delete article:', id);
-  };
-
   return (
-    <div >
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <Title level={2}>My Job Posts</Title>
-        <Button type="primary" icon={<PlusOutlined />}>
-          <Link to="/job-post">Create Article</Link>
-        </Button>
+        <Title level={2}>Review Articles</Title>
       </div>
       <Table
         columns={columns}
         dataSource={articles}
         rowKey="id"
         loading={loading}
+        onRow={(record) => ({
+          onClick: () => handleRowClick(record),
+          style: { cursor: 'pointer' }
+        })}
         pagination={{
           current: currentPage,
           pageSize: pageSize,
@@ -161,4 +203,4 @@ const MyJobPostsPage: React.FC = () => {
   );
 };
 
-export default MyJobPostsPage;
+export default ReviewArticlesPage; 

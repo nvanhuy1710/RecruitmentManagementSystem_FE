@@ -9,9 +9,12 @@ import RegisterPage from './pages/RegisterPage';
 import JobPostPage from './pages/JobPostPage';
 import MyJobPostsPage from './pages/MyJobPostsPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
+import ReviewArticlesPage from './pages/ReviewArticlesPage';
+import ReviewArticleDetailPage from './pages/ReviewArticleDetailPage';
 import { AuthProvider } from './contexts/AuthContext';
 
 import './App.css';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -23,9 +26,12 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={<MainLayout children={<Outlet />} />}>
               <Route index element={<HomePage />} />
-              <Route path="job-post" element={<JobPostPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="post-job" element={<JobPostPage />} />
               <Route path="my-job-posts" element={<MyJobPostsPage />} />
-              <Route path="job-post/:id" element={<ArticleDetailPage />} />
+              <Route path="article/:id" element={<ArticleDetailPage />} />
+              <Route path="review-articles" element={<ReviewArticlesPage />} />
+              <Route path="review-article/:id" element={<ReviewArticleDetailPage />} />
             </Route>
           </Routes>
         </Router>

@@ -400,6 +400,31 @@ export const jobService = {
       throw error;
     }
   },
+
+  getPendingArticles: async (page: number, size: number) => {
+    const response = await apiClient.get(`${API_CONFIG.BASE_URL}/api/admin-articles/pending-approve`, {
+      params: {
+        page,
+        size
+      },
+      withCredentials: true
+    });
+    return response;
+  },
+
+  approveArticle: async (id: number) => {
+    const response = await apiClient.put(`${API_CONFIG.BASE_URL}/api/admin-articles/${id}/approve`, {}, {
+      withCredentials: true
+    });
+    return response.data;
+  },
+
+  rejectArticle: async (id: number) => {
+    const response = await apiClient.put(`${API_CONFIG.BASE_URL}/api/admin-articles/${id}/reject`, {}, {
+      withCredentials: true
+    });
+    return response.data;
+  },
 };
 
 export const checkAuth = async () => {
