@@ -12,11 +12,12 @@ export const API_CONFIG = {
     },
     JOB: {
       LIST: '/api/jobs',
-      DETAIL: '/api/jobs/:id',
-      CREATE: '/api/articles',
+      DETAIL: '/api/jobs',
+      CREATE: '/api/jobs',
       MY_ARTICLES: '/api/articles',
-      UPDATE: '/api/jobs/:id/update',
-      DELETE: '/api/jobs/:id/delete'
+      UPDATE: '/api/articles',
+      DELETE: '/api/articles',
+      PUBLIC_ARTICLES: '/public/api/articles'
     }
   }
 }; 

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_CONFIG } from '../config/config';
+import { ppid } from 'process';
 
 interface LoginResponse {
   expiredIn: number;
@@ -193,14 +194,28 @@ export const authService = {
   },
 
   getUserInfo: async (): Promise<UserInfo> => {
-    const response = await apiClient.get<UserInfo>('/api/account');
-    return response.data;
+    try {
+      const response = await apiClient.get<UserInfo>('/api/account');
+      return response.data;
+    } catch(error : any) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = '/login';
+      }
+      return error;
+    }
   },
 
   updateUserInfo: async (userData: UpdateUserPayload): Promise<UserInfo> => {
-    const response = await apiClient.put<UserInfo>('/api/account', userData);
-    localStorage.setItem('userInfo', JSON.stringify(response.data));
-    return response.data;
+    try {    
+      const response = await apiClient.put<UserInfo>('/api/account', userData);
+      localStorage.setItem('userInfo', JSON.stringify(response.data));
+      return response.data;
+    }catch(error : any) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = '/login';
+      }
+      return error;
+    }
   },
 
   updateAvatar: async (formData: FormData): Promise<void> => {
@@ -358,7 +373,7 @@ export const jobService = {
 
   getArticleById: async (id: number) => {
     try {
-      const response = await axios.get(`${API_CONFIG.BASE_URL}/api/articles/${id}`, {
+      const response = await axios.get(`${API_CONFIG.BASE_URL}/public/api/articles/${id}`, {
         withCredentials: true,
         headers: {
           'Content-Type': 'application/json',
@@ -425,6 +440,10 @@ export const jobService = {
     });
     return response.data;
   },
+
+  getPublicArticles: async () => {
+    return apiClient.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.JOB.PUBLIC_ARTICLES}`);
+  },
 };
 
 export const checkAuth = async () => {
@@ -434,6 +453,25 @@ export const checkAuth = async () => {
   } catch (error) {
     return false;
   }
+};
+
+export const applicantService = {
+  createApplicant: async (formData: FormData) => {
+    try {
+      const response = await axios.post(`${API_CONFIG.BASE_URL}/api/applicants`, formData, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response;
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = '/login';
+      }
+      throw error;
+    }
+  },
 };
 
 export default jobService; 

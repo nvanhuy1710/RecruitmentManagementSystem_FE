@@ -6,7 +6,11 @@ const { Text } = Typography;
 
 const Footer: React.FC = () => {
   return (
-    <AntFooter className="footer">
+    <AntFooter style={{ 
+      textAlign: 'center',
+      padding: '24px',
+      backgroundColor: '#f0f2f5'
+    }}>
       <Text>© 2024 Job Portal. All rights reserved.</Text>
     </AntFooter>
   );

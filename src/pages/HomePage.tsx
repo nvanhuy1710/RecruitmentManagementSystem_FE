@@ -1,14 +1,54 @@
-import React from 'react';
-import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space } from 'antd';
-import { SearchOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space, Image, Tag } from 'antd';
+import { BuildOutlined, SearchOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import { jobService } from '../services/apiService';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 const { Content } = Layout;
 const { Option } = Select;
 const { Title, Text } = Typography;
 
+interface Article {
+  id: number;
+  title: string;
+  location: string;
+  workingModel: {
+    name: string;
+  };
+  fromSalary: number;
+  toSalary: number;
+  mainImageUrl?: string;
+  company: string;
+}
+
 const HomePage: React.FC = () => {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      const response = await jobService.getPublicArticles();
+      setArticles(response.data);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCardClick = (id: number) => {
+    navigate(`/view-article/${id}`);
+  };
+
   return (
     <Layout>
       {/* <Header /> */}
@@ -79,84 +119,57 @@ const HomePage: React.FC = () => {
             Featured Jobs
           </Title>
           <Row gutter={[24, 24]}>
-            <Col span={8}>
-              <Card
-                hoverable
-                cover={
-                  <div style={{ 
-                    height: '200px', 
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Text style={{ fontSize: '24px', color: 'white' }}>Tech Corp</Text>
-                  </div>
-                }
-              >
-                <Title level={4}>Frontend Developer</Title>
-                <Space direction="vertical" size="small">
-                  <Text><EnvironmentOutlined /> Hanoi</Text>
-                  <Text><ClockCircleOutlined /> Full-time</Text>
-                  <Text><DollarOutlined /> $1000 - $2000</Text>
-                </Space>
-                <Button type="primary" block style={{ marginTop: '20px' }}>
-                  Apply Now
-                </Button>
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card
-                hoverable
-                cover={
-                  <div style={{ 
-                    height: '200px', 
-                    background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Text style={{ fontSize: '24px', color: 'white' }}>Software Inc</Text>
-                  </div>
-                }
-              >
-                <Title level={4}>Backend Developer</Title>
-                <Space direction="vertical" size="small">
-                  <Text><EnvironmentOutlined /> Ho Chi Minh City</Text>
-                  <Text><ClockCircleOutlined /> Full-time</Text>
-                  <Text><DollarOutlined /> $1200 - $2500</Text>
-                </Space>
-                <Button type="primary" block style={{ marginTop: '20px' }}>
-                  Apply Now
-                </Button>
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card
-                hoverable
-                cover={
-                  <div style={{ 
-                    height: '200px', 
-                    background: 'linear-gradient(135deg, #722ed1 0%, #531dab 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Text style={{ fontSize: '24px', color: 'white' }}>Design Studio</Text>
-                  </div>
-                }
-              >
-                <Title level={4}>UI/UX Designer</Title>
-                <Space direction="vertical" size="small">
-                  <Text><EnvironmentOutlined /> Da Nang</Text>
-                  <Text><ClockCircleOutlined /> Part-time</Text>
-                  <Text><DollarOutlined /> $800 - $1500</Text>
-                </Space>
-                <Button type="primary" block style={{ marginTop: '20px' }}>
-                  Apply Now
-                </Button>
-              </Card>
-            </Col>
+            {articles.map((article) => (
+              <Col xs={24} sm={12} md={10} lg={8} key={article.id}>
+                <Card
+                  hoverable
+                  onClick={() => handleCardClick(article.id)}
+                  cover={
+                    <Image
+                      alt={article.title}
+                      src={article.mainImageUrl || 'https://via.placeholder.com/300x200?text=Company'}
+                      style={{ height: '200px', objectFit: 'cover' }}
+                      preview={false}
+                    />
+                  }
+                >
+                  <Card.Meta
+                    title={
+                      <div style={{ textAlign: 'center' }}>
+                        {article.title}
+                      </div>
+                    }
+                    description={
+                      <div>
+                        <BuildOutlined />
+                        <Text strong >{article.company}</Text>
+                        <br />
+                        <Space>
+                          <EnvironmentOutlined />
+                          <Text type="secondary">{article.location}</Text>
+                        </Space>
+                        <br />
+                        <Space>
+                          <ClockCircleOutlined />
+                          <Text >{article.workingModel.name}</Text>
+                        </Space>
+                        <br />
+                        <Space>
+                          <DollarOutlined />
+                          <Text>
+                            {article.fromSalary === null && article.toSalary === null 
+                              ? 'Negotiation'
+                              : article.fromSalary === null 
+                                ? article.toSalary ? `$${article.toSalary}` : ''
+                                : `$${article.fromSalary} - $${article.toSalary}`}
+                          </Text>
+                        </Space>
+                      </div>
+                    }
+                  />
+                </Card>
+              </Col>
+            ))}
           </Row>
         </div>
 

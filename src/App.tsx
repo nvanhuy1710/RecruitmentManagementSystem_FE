@@ -15,6 +15,8 @@ import { AuthProvider } from './contexts/AuthContext';
 
 import './App.css';
 import ProfilePage from './pages/ProfilePage';
+import ViewArticlePage from './pages/ViewArticlePage';
+import ApplyJobPage from './pages/ApplyJobPage';
 
 function App() {
   return (
@@ -29,9 +31,11 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="post-job" element={<JobPostPage />} />
               <Route path="my-job-posts" element={<MyJobPostsPage />} />
-              <Route path="article/:id" element={<ArticleDetailPage />} />
+              <Route path="job-post/:id" element={<ArticleDetailPage />} />
               <Route path="review-articles" element={<ReviewArticlesPage />} />
               <Route path="review-article/:id" element={<ReviewArticleDetailPage />} />
+              <Route path="view-article/:id" element={<ViewArticlePage />} />
+              <Route path="/apply-job/:id" element={<ApplyJobPage />} />
             </Route>
           </Routes>
         </Router>
