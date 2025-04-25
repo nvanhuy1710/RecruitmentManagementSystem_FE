@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Typography, Tag } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { getApplicants } from '../services/apiService';
+import { getMyApplicants } from '../services/apiService';
+import dayjs from 'dayjs';
 
 const MyApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState([]);
@@ -13,7 +14,7 @@ const MyApplicationsPage: React.FC = () => {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const data = await getApplicants(currentPage - 1, pageSize);
+        const data = await getMyApplicants(currentPage - 1, pageSize);
         setApplications(data);
       } catch (error) {
         console.error('Error fetching applications:', error);
@@ -24,6 +25,10 @@ const MyApplicationsPage: React.FC = () => {
 
     fetchApplications();
   }, [currentPage, pageSize]);
+
+  const formatDate = (dateString: string) => {
+    return dateString ? dayjs(parseInt(dateString) * 1000).format('DD/MM/YYYY') : '';
+  };
 
   const columns = [
     {
@@ -64,10 +69,10 @@ const MyApplicationsPage: React.FC = () => {
     },
     {
       title: 'Upload date',
-      dataIndex: 'createDate',
-      key: 'createDate',
+      dataIndex: 'createdDate',
+      key: 'createdDate',
       align: 'center' as const,
-      render: (text: any) => text || '',
+      render: (text: string) => formatDate(text),
     },
   ];
 

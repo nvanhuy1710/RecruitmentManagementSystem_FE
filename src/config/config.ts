@@ -3,7 +3,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/api/auth/login',
-      REGISTER: '/api/auth/register',
+      REGISTER: '/api/register',
       LOGOUT: '/api/auth/logout'
     },
     USER: {
@@ -13,7 +13,7 @@ export const API_CONFIG = {
     JOB: {
       LIST: '/api/jobs',
       DETAIL: '/api/jobs',
-      CREATE: '/api/jobs',
+      CREATE: '/api/articles',
       MY_ARTICLES: '/api/articles',
       UPDATE: '/api/articles',
       DELETE: '/api/articles',

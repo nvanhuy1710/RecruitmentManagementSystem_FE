@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Typography, Image, Space, Divider, Tag, Button } from 'antd';
 import { BuildOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined, CalendarOutlined, TeamOutlined, AppstoreOutlined } from '@ant-design/icons';
-import { jobService } from '../services/apiService';
+import { jobService, authService } from '../services/apiService';
 import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
@@ -30,15 +30,30 @@ interface Article {
   };
 }
 
+interface UserInfo {
+  roleName: string;
+}
+
 const ViewArticlePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchArticle();
+    fetchUserInfo();
   }, [id]);
+
+  const fetchUserInfo = async () => {
+    try {
+      const data = await authService.getUserInfo();
+      setUserInfo(data);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
 
   const fetchArticle = async () => {
     try {
@@ -65,7 +80,7 @@ const ViewArticlePage: React.FC = () => {
   };
 
   const isOverDue = article && dayjs.unix(article.dueDate).isBefore(dayjs().startOf('day'), 'second');
-  console.log("day:  " + dayjs())
+  const canApply = userInfo?.roleName === 'USER';
 
   return (
     <div style={{ maxWidth: '800px', margin: '24px auto', padding: '0 24px' }}>
@@ -156,9 +171,11 @@ const ViewArticlePage: React.FC = () => {
           <Paragraph>{article.requirement}</Paragraph>
         </div>
 
-        <Button type="primary" block onClick={handleApply}>
-          Apply Now
-        </Button>
+        {canApply && !isOverDue && (
+          <Button type="primary" block onClick={handleApply}>
+            Apply Now
+          </Button>
+        )}
       </Card>
     </div>
   );

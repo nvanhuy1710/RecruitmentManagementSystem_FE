@@ -51,7 +51,7 @@ const apiClient = axios.create({
 // List of URLs that don't require authentication
 const publicUrls = [
   '/api/auth/login',
-  '/api/auth/register',
+  '/api/register',
   '/api/auth/refresh-token'
 ];
 
@@ -193,15 +193,13 @@ export const authService = {
     }
   },
 
-  getUserInfo: async (): Promise<UserInfo> => {
+  getUserInfo: async () => {
     try {
-      const response = await apiClient.get<UserInfo>('/api/account');
+      const response = await apiClient.get('/api/account');
       return response.data;
-    } catch(error : any) {
-      if (error.response && error.response.status === 401) {
-        window.location.href = '/login';
-      }
-      return error;
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      throw error;
     }
   },
 
@@ -272,6 +270,28 @@ export const userService = {
   updateProfile: async (profileData: any) => {
     const response = await apiClient.put(API_CONFIG.ENDPOINTS.USER.UPDATE_PROFILE, profileData);
     return response.data;
+  },
+
+  getAllUsers: async () => {
+    try {
+      const response = await apiClient.get('/public/api/users');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  },
+
+  updateUserRole: async (userId: number, roleName: string) => {
+    try {
+      const response = await apiClient.put(`/api/users/${userId}/role`, {
+        roleName
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error;
+    }
   }
 };
 
@@ -371,6 +391,23 @@ export const jobService = {
     }
   },
 
+  getAllMyArticles: async (status?: string) => {
+    try {
+      const params: any = {};
+      if (status) {
+        params['status.equals'] = status;
+      }
+      const response = await apiClient.get(`${API_CONFIG.BASE_URL}/api/articles`, {
+        params: params,
+        withCredentials: true
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+
   getArticleById: async (id: number) => {
     try {
       const response = await axios.get(`${API_CONFIG.BASE_URL}/public/api/articles/${id}`, {
@@ -442,8 +479,10 @@ export const jobService = {
     return response.data;
   },
 
-  getPublicArticles: async () => {
-    return apiClient.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.JOB.PUBLIC_ARTICLES}`);
+  getPublicArticles: async (params?: any) => {
+    return apiClient.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.JOB.PUBLIC_ARTICLES}`, {
+      params
+    });
   },
 };
 
@@ -473,11 +512,47 @@ export const applicantService = {
       throw error;
     }
   },
+
+  approveApplication: async (id: number) => {
+    const response = await axios.put(`${API_CONFIG.BASE_URL}/api/applicants/${id}/accept`, {}, {
+      withCredentials: true
+    });
+    return response.data;
+  },
+
+  declineApplication: async (id: number) => {
+    const response = await axios.put(`${API_CONFIG.BASE_URL}/api/applicants/${id}/decline`, {}, {
+      withCredentials: true
+    });
+    return response.data;
+  },
 };
 
-export const getApplicants = async (page: number, size: number) => {
+export enum ApplicationStatus {
+  SUBMITTED = 'SUBMITTED',
+  DECLINED = 'DECLINED',
+  ACCEPTED = 'ACCEPTED'
+}
+
+export const getApplicants = async (params: any, status?: ApplicationStatus) => {
   try {
+    const queryParams = { ...params };
+    if (status) {
+      queryParams['status.equals'] = status;
+    }
     const response = await apiClient.get('/api/applicants', {
+      params: queryParams
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching applicants:', error);
+    throw error;
+  }
+};
+
+export const getMyApplicants = async (page: number, size: number) => {
+  try {
+    const response = await apiClient.get('/api/my-applicants', {
       params: { page, size, sort: 'id,desc' },
     });
     return response.data;

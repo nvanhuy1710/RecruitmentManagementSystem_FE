@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, Button, Layout } from 'antd';
-import { UploadOutlined, MenuFoldOutlined, MenuUnfoldOutlined, FileTextOutlined, FileAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Layout, Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HomeOutlined,
+  FileAddOutlined,
+  ProfileOutlined,
+  AuditOutlined,
+  TeamOutlined,
   UserOutlined,
-  SettingOutlined,
+  FileSearchOutlined
 } from '@ant-design/icons';
-import { checkAuth } from '../../services/apiService';
+import { authService } from '../../services/apiService';
+import type { MenuProps } from 'antd';
 
 const { Sider } = Layout;
 
@@ -18,86 +22,107 @@ interface SideMenuProps {
 
 const SideMenu: React.FC<SideMenuProps> = ({ collapsed, onCollapse }) => {
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
-    const verifyAuth = async () => {
-      const isAuth = await checkAuth();
-      setIsAuthenticated(isAuth);
-    };
-    verifyAuth();
+    fetchUserInfo();
   }, []);
 
-  const menuItems = [
+  const fetchUserInfo = async () => {
+    try {
+      const data = await authService.getUserInfo();
+      setUserInfo(data);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  const baseMenuItems = [
     {
       key: '/',
       icon: <HomeOutlined />,
       label: <Link to="/">Home</Link>,
-    },
-    ...(isAuthenticated ? [
-      {
-        key: '/profile',
-        icon: <UserOutlined />,
-        label: <Link to="/profile">Profile</Link>,
-      },
-      {
-        key: '/my-job-posts',
-        icon: <FileTextOutlined />,
-        label: <Link to="/my-job-posts">My Job Posts</Link>,
-      },
-      {
-        key: '/my-applications',
-        icon: <UploadOutlined />,
-        label: <Link to="/my-applications">My Applications</Link>,
-      },
-      {
-        key: '/review-articles',
-        icon: <CheckCircleOutlined />,
-        label: <Link to="/review-articles">Review Articles</Link>,
-      }
-    ] : []),
-    {
-      key: '/settings',
-      icon: <SettingOutlined />,
-      label: <Link to="/settings">Settings</Link>,
     }
   ];
 
+  const profileMenuItem = userInfo ? [
+    {
+      key: '/profile',
+      icon: <UserOutlined />,
+      label: <Link to="/profile">Profile</Link>,
+    }
+  ] : [];
+
+  const userMenuItems = userInfo?.roleName === 'USER' ? [
+    {
+      key: '/my-applications',
+      icon: <AuditOutlined />,
+      label: <Link to="/my-applications">My Applications</Link>,
+    }
+  ] : [];
+
+  const employerMenuItems = userInfo?.roleName === 'EMPLOYER' ? [
+    {
+      key: '/my-job-posts',
+      icon: <ProfileOutlined />,
+      label: <Link to="/my-job-posts">My Job Posts</Link>,
+    },
+    {
+      key: '/applicants',
+      icon: <FileSearchOutlined />,
+      label: <Link to="/applicants">Applicants</Link>,
+    }
+  ] : [];
+
+  const adminMenuItems = userInfo?.roleName === 'ADMIN' ? [
+    {
+      key: '/review-article',
+      icon: <FileSearchOutlined />,
+      label: <Link to="/review-articles">Review Article</Link>,
+      roles: ['ADMIN'],
+    },
+    {
+      key: '/users',
+      icon: <TeamOutlined />,
+      label: <Link to="/users">Users Management</Link>,
+      roles: ['ADMIN'],
+    }
+  ] : [];
+
+  const menuItems: MenuProps['items'] = [
+    ...baseMenuItems,
+    ...profileMenuItem,
+    ...userMenuItems,
+    ...employerMenuItems,
+    ...adminMenuItems
+  ];
+
   return (
-    <Sider 
-      trigger={null} 
-      collapsible 
+    <Sider
+      collapsible
       collapsed={collapsed}
+      onCollapse={onCollapse}
       style={{
         overflow: 'auto',
-        height: '100vh',
+        height: 'calc(100vh - 56px)',
         position: 'fixed',
         left: 0,
-        top: 64,
+        top: 56,
         bottom: 0,
-        transition: 'all 0.2s',
+        background: '#ffffff',
+        boxShadow: '2px 0 8px rgba(0,0,0,0.1)'
       }}
+      theme="light"
     >
       <Menu
         theme="light"
-        mode="inline"
         selectedKeys={[location.pathname]}
+        mode="inline"
         items={menuItems}
-        style={{ 
-          height: '100%', 
-          borderRight: 0,
-          background: '#ffffff',
-          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)'
+        style={{
+          borderRight: 'none'
         }}
       />
-      <div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '16px' }}>
-        <Button
-          type="text"
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={() => onCollapse(!collapsed)}
-          style={{ width: '100%', color: 'white' }}
-        />
-      </div>
     </Sider>
   );
 };

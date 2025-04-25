@@ -1,67 +1,176 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Typography, List, Tag, Spin, Card } from 'antd';
-import { getApplicationById } from '../services/apiService';
+import { Card, Typography, Space, Tag, Button, message, List } from 'antd';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getApplicationById, ApplicationStatus, applicantService, authService } from '../services/apiService';
+import { CheckOutlined, CloseOutlined, FileOutlined } from '@ant-design/icons';
+
+const { Title, Text } = Typography;
+
+interface UserInfo {
+  roleName: string;
+}
+
+interface Document {
+  name: string;
+  fileUrl: string;
+}
 
 const ApplicationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
-    const fetchApplication = async () => {
-      if (!id) return; // Check if id is undefined
-      try {
-        const data = await getApplicationById(id);
-        setApplication(data);
-      } catch (error) {
-        console.error('Error fetching application details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchApplication();
+    fetchUserInfo();
   }, [id]);
 
-  if (loading) return <Spin size="large" />;
+  const fetchUserInfo = async () => {
+    try {
+      const data = await authService.getUserInfo();
+      setUserInfo(data);
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  const fetchApplication = async () => {
+    try {
+      setLoading(true);
+      const data = await getApplicationById(id!);
+      setApplication(data);
+    } catch (error) {
+      console.error('Error fetching application:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      await applicantService.approveApplication(application.id);
+      message.success('Application approved successfully');
+      fetchApplication();
+    } catch (error) {
+      message.error('Failed to approve application');
+    }
+  };
+
+  const handleDecline = async () => {
+    try {
+      await applicantService.declineApplication(application.id);
+      message.success('Application declined successfully');
+      fetchApplication();
+    } catch (error) {
+      message.error('Failed to decline application');
+    }
+  };
+
+  const handleViewArticle = () => {
+    if (application?.article?.id) {
+      navigate(`/view-article/${application.article.id}`);
+    }
+  };
+
+  const canShowActions = () => {
+    return userInfo && 
+           (userInfo.roleName === 'EMPLOYER' || userInfo.roleName === 'ADMIN') &&
+           application?.status === ApplicationStatus.SUBMITTED;
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!application) {
+    return <div>Application not found</div>;
+  }
 
   return (
-    <Card style={{ margin: '20px' }}>
-      <Typography.Title level={2}>Application Details</Typography.Title>
-      {application && (
-        <div>
-          <Typography.Paragraph>
-            <span style={{ fontSize: '18px' }}><strong >Article:</strong></span><br /> <Link to={`/view-article/${application.article?.id}`} style={{ fontSize: '18px' }}>{application.article?.title}</Link>
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <span style={{ fontSize: '18px' }}><strong>Full Name:</strong></span><br /> <span style={{ fontSize: '18px' }}>{application.fullName}</span>
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <span style={{ fontSize: '18px' }}><strong>Phone:</strong></span><br /> <span style={{ fontSize: '18px' }}>{application.phone}</span>
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <span style={{ fontSize: '18px' }}><strong>Cover Letter:</strong></span><br /> <span style={{ fontSize: '18px' }}>{application.coverLetter}</span>
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <span style={{ fontSize: '18px' }}><strong>Status:</strong></span><br /> <Tag color={
-              application.status === 'DECLINED' ? 'red' : 
-              application.status === 'ACCEPTED' ? 'green' : 
+    <div style={{ padding: '24px' }}>
+      <Card>
+        <Title level={2}>Application Details</Title>
+        
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div>
+            <Text strong>Article: </Text>
+            <Button type="link" onClick={handleViewArticle}>
+              {application.article?.title || 'N/A'}
+            </Button>
+          </div>
+
+          <div>
+            <Text strong>Status: </Text>
+            <Tag color={
+              application.status === ApplicationStatus.DECLINED ? 'red' : 
+              application.status === ApplicationStatus.ACCEPTED ? 'green' : 
               'gold'
-            } style={{ fontSize: '18px' }}>{application.status}</Tag>
-          </Typography.Paragraph>
-          <Typography.Paragraph>
-            <span style={{ fontSize: '18px' }}><strong>Upload Date:</strong></span><br /> <span style={{ fontSize: '18px' }}>{application.createDate}</span>
-          </Typography.Paragraph>
-          <Typography.Title level={4}>Documents</Typography.Title>
-          {application.documents.map((document: any) => (
-            <Typography.Paragraph key={document.fileUrl}>
-              <a href={document.fileUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '18px' }}>{document.name}</a>
-            </Typography.Paragraph>
-          ))}
-        </div>
-      )}
-    </Card>
+            }>
+              {application.status}
+            </Tag>
+          </div>
+
+          <div>
+            <Text strong>Full Name: </Text>
+            <Text>{application.fullName}</Text>
+          </div>
+
+          <div>
+            <Text strong>Phone: </Text>
+            <Text>{application.phone}</Text>
+          </div>
+
+          <div>
+            <Text strong>Email: </Text>
+            <Text>{application.email}</Text>
+          </div>
+
+          <div>
+            <Text strong>Address: </Text>
+            <Text>{application.address}</Text>
+          </div>
+
+          <div>
+            <Text strong>Documents: </Text>
+            <List
+              dataSource={application.documents}
+              renderItem={(document: Document) => (
+                <List.Item>
+                  <Button 
+                    type="link" 
+                    icon={<FileOutlined />}
+                    onClick={() => window.open(document.fileUrl, '_blank')}
+                  >
+                    {document.name}
+                  </Button>
+                </List.Item>
+              )}
+            />
+          </div>
+
+          {canShowActions() && (
+            <Space>
+              <Button 
+                type="primary" 
+                icon={<CheckOutlined />} 
+                onClick={handleApprove}
+              >
+                Accept
+              </Button>
+              <Button 
+                danger 
+                icon={<CloseOutlined />} 
+                onClick={handleDecline}
+              >
+                Decline
+              </Button>
+            </Space>
+          )}
+        </Space>
+      </Card>
+    </div>
   );
 };
 

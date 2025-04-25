@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
       padding: '24px',
       backgroundColor: '#f0f2f5'
     }}>
-      <Text>© 2024 Job Portal. All rights reserved.</Text>
+      <Text>© 2025 Job Portal. All rights reserved.</Text>
     </AntFooter>
   );
 };

@@ -131,7 +131,7 @@ const MyJobPostsPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <Title level={2}>My Job Posts</Title>
         <Button type="primary" icon={<PlusOutlined />}>
-          <Link to="/job-post">Create Article</Link>
+          <Link to="/post-job">Create Article</Link>
         </Button>
       </div>
       <Table

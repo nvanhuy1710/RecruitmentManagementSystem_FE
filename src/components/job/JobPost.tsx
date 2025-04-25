@@ -38,7 +38,11 @@ interface JobArticle {
   workingModelId: number;
 }
 
-const JobPost: React.FC = () => {
+interface JobPostProps {
+  onSuccess?: () => void;
+}
+
+const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [industries, setIndustries] = useState<Industry[]>([]);
   const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
@@ -90,7 +94,10 @@ const JobPost: React.FC = () => {
       
       if (result.success) {
         message.success('Post Article Successful');
-        navigate('/');
+        if (onSuccess) {
+          onSuccess();
+        }
+        navigate('/my-job-posts');
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to post job. Please try again.';

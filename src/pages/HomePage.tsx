@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space, Image, Tag } from 'antd';
+import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space, Image, Tag, message } from 'antd';
 import { BuildOutlined, SearchOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
@@ -10,6 +10,16 @@ import { useNavigate } from 'react-router-dom';
 const { Content } = Layout;
 const { Option } = Select;
 const { Title, Text } = Typography;
+
+interface JobLevel {
+  id: number;
+  name: string;
+}
+
+interface Industry {
+  id: number;
+  name: string;
+}
 
 interface Article {
   id: number;
@@ -22,27 +32,65 @@ interface Article {
   toSalary: number;
   mainImageUrl?: string;
   company: string;
+  address: string;
 }
 
 const HomePage: React.FC = () => {
+  const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
+  const [industries, setIndustries] = useState<Industry[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useState({
+    title: '',
+    jobLevelId: undefined as number | undefined,
+    industryId: undefined as number | undefined
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
+    fetchFilters();
     fetchArticles();
   }, []);
+
+  const fetchFilters = async () => {
+    try {
+      const [jobLevelsResponse, industriesResponse] = await Promise.all([
+        jobService.getJobLevels(),
+        jobService.getIndustries()
+      ]);
+      setJobLevels(jobLevelsResponse);
+      setIndustries(industriesResponse);
+    } catch (error) {
+      message.error('Failed to fetch filters');
+    }
+  };
 
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const response = await jobService.getPublicArticles();
+      const params: any = {};
+      
+      if (searchParams.title) {
+        params['title.contains'] = searchParams.title;
+      }
+      if (searchParams.jobLevelId) {
+        params['jobLevelId.equals'] = searchParams.jobLevelId;
+      }
+      if (searchParams.industryId) {
+        params['industryId.equals'] = searchParams.industryId;
+      }
+
+      const response = await jobService.getPublicArticles(params);
       setArticles(response.data);
     } catch (error) {
-      console.error('Error fetching articles:', error);
+      message.error('Failed to fetch articles');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    fetchArticles();
   };
 
   const handleCardClick = (id: number) => {
@@ -69,42 +117,52 @@ const HomePage: React.FC = () => {
           <div style={{ maxWidth: '800px', margin: '40px auto' }}>
             <Card>
               <Row gutter={[16, 16]}>
-                <Col span={10}>
+                <Col xs={24} sm={24} md={8}>
                   <Input
-                    size="large"
-                    placeholder="Job title, keywords, or company"
-                    prefix={<SearchOutlined />}
+                    placeholder="Search by title"
+                    value={searchParams.title}
+                    onChange={(e) => setSearchParams({ ...searchParams, title: e.target.value })}
+                    allowClear
                   />
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Select
-                    size="large"
-                    placeholder="Location"
                     style={{ width: '100%' }}
-                    suffixIcon={<EnvironmentOutlined />}
+                    placeholder="Select Job Level"
+                    allowClear
+                    value={searchParams.jobLevelId}
+                    onChange={(value) => setSearchParams({ ...searchParams, jobLevelId: value })}
                   >
-                    <Option value="all">All Locations</Option>
-                    <Option value="hanoi">Hanoi</Option>
-                    <Option value="hcm">Ho Chi Minh City</Option>
-                    <Option value="danang">Da Nang</Option>
+                    {jobLevels.map(level => (
+                      <Select.Option key={level.id} value={level.id}>
+                        {level.name}
+                      </Select.Option>
+                    ))}
                   </Select>
                 </Col>
-                <Col span={6}>
+                <Col xs={24} sm={12} md={6}>
                   <Select
-                    size="large"
-                    placeholder="Job Type"
                     style={{ width: '100%' }}
-                    suffixIcon={<ClockCircleOutlined />}
+                    placeholder="Select Industry"
+                    allowClear
+                    value={searchParams.industryId}
+                    onChange={(value) => setSearchParams({ ...searchParams, industryId: value })}
                   >
-                    <Option value="all">All Types</Option>
-                    <Option value="full-time">Full-time</Option>
-                    <Option value="part-time">Part-time</Option>
-                    <Option value="contract">Contract</Option>
-                    <Option value="internship">Internship</Option>
+                    {industries.map(industry => (
+                      <Select.Option key={industry.id} value={industry.id}>
+                        {industry.name}
+                      </Select.Option>
+                    ))}
                   </Select>
                 </Col>
-                <Col span={2}>
-                  <Button type="primary" size="large" block>
+                <Col xs={24} sm={24} md={4}>
+                  <Button 
+                    type="primary" 
+                    icon={<SearchOutlined />} 
+                    onClick={handleSearch}
+                    loading={loading}
+                    style={{ width: '100%' }}
+                  >
                     Search
                   </Button>
                 </Col>

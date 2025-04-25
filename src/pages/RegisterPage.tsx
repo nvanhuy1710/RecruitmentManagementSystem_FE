@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography, DatePicker, Select, Layout } from 'antd';
+import { Form, Input, Button, Card, message, Typography, DatePicker, Select, Layout, Radio } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, UserAddOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -24,17 +24,21 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
 
   const onFinish = async (values: RegisterFormValues) => {
-    setLoading(true);
     try {
+      setLoading(true);
       const { confirmPassword, ...registerData } = values;
-      await authService.register({
+      
+      const userData = {
         ...registerData,
-        birth: values.birth.format('YYYY-MM-DD')
-      });
+        gender: values.gender === 'male' ? 'true' : 'false',
+        birth: dayjs(values.birth).format('YYYY-MM-DD[T]00:00:00[Z]')
+      };
+
+      await authService.register(userData);
       message.success('Registration successful! Please login.');
       navigate('/login');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Registration failed. Please try again.');
+      message.error(error.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -91,7 +95,7 @@ const RegisterPage: React.FC = () => {
               name="username"
               rules={[
                 { required: true, message: 'Please input your username!' },
-                { min: 4, message: 'Username must be at least 4 characters!' }
+                { min: 2, message: 'Username must be at least 2 characters!' }
               ]}
             >
               <Input 
@@ -138,10 +142,10 @@ const RegisterPage: React.FC = () => {
               name="gender"
               rules={[{ required: true, message: 'Please select your gender!' }]}
             >
-              <Select placeholder="Select Gender">
-                <Option value="male">Male</Option>
-                <Option value="female">Female</Option>
-              </Select>
+              <Radio.Group>
+                <Radio value="male">Male</Radio>
+                <Radio value="female">Female</Radio>
+              </Radio.Group>
             </Form.Item>
 
             <Form.Item
