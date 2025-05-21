@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Form, Input, Button, Upload, Typography, Layout, Card, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { authService, applicantService } from '../services/apiService';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -10,6 +10,7 @@ const { Title } = Typography;
 const ApplyJobPage: React.FC = () => {
   const [form] = Form.useForm();
   const { id: articleId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -40,6 +41,7 @@ const ApplyJobPage: React.FC = () => {
     try {
       await applicantService.createApplicant(formData);
       message.success('Application submitted successfully');
+      navigate('/my-applications');
     } catch (error) {
       console.error('Error submitting application:', error);
       message.error('Failed to submit application');

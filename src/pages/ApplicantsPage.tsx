@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Typography, Select, Space, Tag, Button, message } from 'antd';
+import { Table, Typography, Select, Space, Tag, Button, message, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { getApplicants, jobService, ApplicationStatus, applicantService } from '../services/apiService';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, CalculatorOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -19,6 +19,11 @@ const ApplicantsPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [selectedArticle, setSelectedArticle] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'ALL'>(ApplicationStatus.SUBMITTED);
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortOrder, setSortOrder] = useState<string>('desc');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedArticleForScore, setSelectedArticleForScore] = useState<number | null>(null);
+  const [calculating, setCalculating] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +32,7 @@ const ApplicantsPage: React.FC = () => {
 
   useEffect(() => {
     fetchApplications();
-  }, [currentPage, pageSize, selectedArticle, selectedStatus]);
+  }, [currentPage, pageSize, selectedArticle, selectedStatus, sortField, sortOrder]);
 
   const fetchArticles = async () => {
     try {
@@ -44,7 +49,7 @@ const ApplicantsPage: React.FC = () => {
       const params = {
         page: currentPage - 1,
         size: pageSize,
-        sort: 'id,desc',
+        sort: `${sortField},${sortOrder}`,
         ...(selectedArticle && { 'articleId.equals': selectedArticle })
       };
       const data = await getApplicants(
@@ -69,6 +74,13 @@ const ApplicantsPage: React.FC = () => {
     setCurrentPage(1);
   };
 
+  const handleTableChange = (pagination: any, filters: any, sorter: any) => {
+    if (sorter.field) {
+      setSortField(sorter.field);
+      setSortOrder(sorter.order === 'ascend' ? 'asc' : 'desc');
+    }
+  };
+
   const handleApprove = async (id: number) => {
     try {
       await applicantService.approveApplication(id);
@@ -86,6 +98,25 @@ const ApplicantsPage: React.FC = () => {
       fetchApplications();
     } catch (error) {
       message.error('Failed to decline application');
+    }
+  };
+
+  const handleCalculateScore = async () => {
+    if (!selectedArticleForScore) {
+      message.error('Please select an article');
+      return;
+    }
+
+    try {
+      setCalculating(true);
+      await applicantService.calculateMatchScore(selectedArticleForScore);
+      message.success('Match scores calculated successfully');
+      setIsModalVisible(false);
+      fetchApplications();
+    } catch (error) {
+      message.error('Failed to calculate match scores');
+    } finally {
+      setCalculating(false);
     }
   };
 
@@ -129,6 +160,13 @@ const ApplicantsPage: React.FC = () => {
       render: (text: any) => text || '',
     },
     {
+      title: 'Score',
+      dataIndex: 'matchScore',
+      key: 'matchScore',
+      render: (score: number) => score !== null && score !== undefined ? `${score}` : '',
+      sorter: true,
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: any) => (
@@ -164,7 +202,16 @@ const ApplicantsPage: React.FC = () => {
 
   return (
     <div>
-      <Typography.Title level={2}>Applicants</Typography.Title>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Typography.Title level={2}>Applicants</Typography.Title>
+        <Button 
+          type="primary" 
+          icon={<CalculatorOutlined />}
+          onClick={() => setIsModalVisible(true)}
+        >
+          Calculate Match Score
+        </Button>
+      </div>
       <Space style={{ marginBottom: 16 }}>
         <Select
           style={{ width: 300 }}
@@ -207,11 +254,32 @@ const ApplicantsPage: React.FC = () => {
             setPageSize(size);
           },
         }}
+        onChange={handleTableChange}
         onRow={(record) => ({
           onClick: () => navigate(`/application/${record.id}`),
         })}
         style={{ textAlign: 'center' }}
       />
+      <Modal
+        title="Calculate Match Score"
+        open={isModalVisible}
+        onOk={handleCalculateScore}
+        onCancel={() => setIsModalVisible(false)}
+        confirmLoading={calculating}
+      >
+        <Select
+          style={{ width: '100%' }}
+          placeholder="Select article to calculate match score"
+          onChange={(value) => setSelectedArticleForScore(value)}
+          value={selectedArticleForScore}
+        >
+          {articles.map((article) => (
+            <Option key={article.id} value={article.id}>
+              {article.title}
+            </Option>
+          ))}
+        </Select>
+      </Modal>
     </div>
   );
 };

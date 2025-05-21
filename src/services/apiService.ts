@@ -526,6 +526,13 @@ export const applicantService = {
     });
     return response.data;
   },
+
+  calculateMatchScore: async (articleId: number) => {
+    const response = await axios.get(`${API_CONFIG.BASE_URL}/api/applicants/${articleId}/match-score`, {
+      withCredentials: true
+    });
+    return response.data;
+  },
 };
 
 export enum ApplicationStatus {
