@@ -3,7 +3,7 @@ import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space, Image
 import { BuildOutlined, SearchOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
-import { jobService } from '../services/apiService';
+import { jobService, userService } from '../services/apiService';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +19,11 @@ interface JobLevel {
 interface Industry {
   id: number;
   name: string;
+}
+
+interface Employer {
+  id: number;
+  fullName: string;
 }
 
 interface Article {
@@ -38,19 +43,31 @@ interface Article {
 const HomePage: React.FC = () => {
   const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
   const [industries, setIndustries] = useState<Industry[]>([]);
+  const [employers, setEmployers] = useState<Employer[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchParams, setSearchParams] = useState({
     title: '',
     jobLevelId: undefined as number | undefined,
-    industryId: undefined as number | undefined
+    industryId: undefined as number | undefined,
+    userId: undefined as number | undefined
   });
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchFilters();
+    fetchEmployers();
     fetchArticles();
   }, []);
+
+  const fetchEmployers = async () => {
+    try {
+      const response = await userService.getAllEmployees();
+      setEmployers(response.data);
+    } catch (error) {
+      message.error('Failed to fetch employers');
+    }
+  };
 
   const fetchFilters = async () => {
     try {
@@ -78,6 +95,9 @@ const HomePage: React.FC = () => {
       }
       if (searchParams.industryId) {
         params['industryId.equals'] = searchParams.industryId;
+      }
+      if (searchParams.userId) {
+        params['userId.equals'] = searchParams.userId;
       }
 
       const response = await jobService.getPublicArticles(params);
@@ -151,6 +171,21 @@ const HomePage: React.FC = () => {
                     {industries.map(industry => (
                       <Select.Option key={industry.id} value={industry.id}>
                         {industry.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Select
+                    style={{ width: '100%' }}
+                    placeholder="Select Employer"
+                    allowClear
+                    value={searchParams.userId}
+                    onChange={(value) => setSearchParams({ ...searchParams, userId: value })}
+                  >
+                    {employers.map(employer => (
+                      <Select.Option key={employer.id} value={employer.id}>
+                        {employer.fullName}
                       </Select.Option>
                     ))}
                   </Select>
