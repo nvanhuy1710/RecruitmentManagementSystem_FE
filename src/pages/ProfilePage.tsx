@@ -1,23 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Typography, Layout, DatePicker, Select, Upload } from 'antd';
+import { Form, Input, Button, Card, Typography, Layout, DatePicker, Select, Upload, App } from 'antd';
 import { UserOutlined, UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import type { UploadFile } from 'antd/es/upload/interface';
 import dayjs from 'dayjs';
 import Header from '../components/layout/Header';
-import { authService } from '../services/apiService';
+import { authService, userService, jobService } from '../services/apiService';
 
 const { Content } = Layout;
 const { Title } = Typography;
 const { Option } = Select;
 
+interface Skill {
+  id: number;
+  name: string;
+}
+
 interface UserProfile {
+  username: string;
   email: string;
   fullName: string;
-  username: string;
   gender: boolean;
   birth: string;
   avatarUrl?: string;
+  roleName: string;
+  skills?: { id: number; name: string }[];
 }
 
 const ProfilePage: React.FC = () => {
@@ -25,10 +32,13 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [avatarFile, setAvatarFile] = useState<UploadFile | null>(null);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   useEffect(() => {
     fetchUserProfile();
+    fetchSkills();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -43,6 +53,15 @@ const ProfilePage: React.FC = () => {
     } catch (error) {
       message.error('Failed to fetch user profile');
       navigate('/login');
+    }
+  };
+
+  const fetchSkills = async () => {
+    try {
+      const response = await jobService.getSkills();
+      setSkills(response || []);
+    } catch (error) {
+      message.error('Failed to fetch skills');
     }
   };
 
@@ -65,13 +84,17 @@ const ProfilePage: React.FC = () => {
     setLoading(true);
     try {
       const updateData = {
-        ...values,
+        email: values.email,
+        fullName: values.fullName,
+        username: values.username,
         gender: values.gender === 'true',
-        birth: values.birth.format('YYYY-MM-DDTHH:mm:ss[Z]')
+        birth: values.birth.format('YYYY-MM-DDTHH:mm:ss[Z]'),
+        skillIds: values.skillIds || []
       };
+      console.log('Update data:', updateData);
       await authService.updateUserInfo(updateData);
-      message.success('Profile updated successfully');
-      fetchUserProfile(); // Refresh profile data
+      message.success('Update profile successfully!');
+      fetchUserProfile(); 
     } catch (error) {
       message.error('Failed to update profile');
     } finally {
@@ -197,6 +220,25 @@ const ProfilePage: React.FC = () => {
               />
             </Form.Item>
 
+            {userProfile?.roleName === 'USER' && (
+              <Form.Item
+                name="skillIds"
+                label="Skills"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Select skills"
+                  style={{ width: '100%' }}
+                >
+                  {skills.map(skill => (
+                    <Select.Option key={skill.id} value={skill.id}>
+                      {skill.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            )}
+
             <Form.Item>
               <Button type="primary" htmlType="submit" loading={loading} block>
                 Update Profile
@@ -209,4 +251,12 @@ const ProfilePage: React.FC = () => {
   );
 };
 
-export default ProfilePage; 
+const AppProfilePage: React.FC = () => {
+  return (
+    <App>
+      <ProfilePage />
+    </App>
+  );
+};
+
+export default AppProfilePage; 

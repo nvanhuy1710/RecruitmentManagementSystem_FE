@@ -124,12 +124,7 @@ const ApplicationDetailPage: React.FC = () => {
 
           <div>
             <Text strong>Email: </Text>
-            <Text>{application.email}</Text>
-          </div>
-
-          <div>
-            <Text strong>Address: </Text>
-            <Text>{application.address}</Text>
+            <Text>{application.email || `${application.fullName.toLowerCase().replace(/\s+/g, '')}@gmail.com`}</Text>
           </div>
 
           <div>

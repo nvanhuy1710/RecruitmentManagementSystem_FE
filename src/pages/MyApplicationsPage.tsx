@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Typography, Tag } from 'antd';
+import { Table, Typography, Tag, message, App, Select } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { getMyApplicants } from '../services/apiService';
 import dayjs from 'dayjs';
+
+const { Option } = Select;
 
 const MyApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { message: appMessage } = App.useApp();
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const data = await getMyApplicants(currentPage - 1, pageSize);
+        const data = await getMyApplicants(currentPage - 1, pageSize, statusFilter);
         setApplications(data);
       } catch (error) {
         console.error('Error fetching applications:', error);
@@ -24,7 +28,15 @@ const MyApplicationsPage: React.FC = () => {
     };
 
     fetchApplications();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, statusFilter]);
+
+  useEffect(() => {
+    const successMessage = localStorage.getItem('successMessage');
+    if (successMessage) {
+      appMessage.success(successMessage);
+      localStorage.removeItem('successMessage');
+    }
+  }, [appMessage]);
 
   const formatDate = (dateString: string) => {
     return dateString ? dayjs(parseInt(dateString) * 1000).format('DD/MM/YYYY') : '';
@@ -79,6 +91,20 @@ const MyApplicationsPage: React.FC = () => {
   return (
     <div>
       <Typography.Title level={2}>My Applications</Typography.Title>
+      
+      <div style={{ marginBottom: 16 }}>
+        <Select
+          style={{ width: 200 }}
+          placeholder="Filter by status"
+          allowClear
+          onChange={(value) => setStatusFilter(value)}
+        >
+          <Option value="SUBMITTED">Submitted</Option>
+          <Option value="DECLINED">Declined</Option>
+          <Option value="ACCEPTED">Accepted</Option>
+        </Select>
+      </div>
+
       <Table 
         columns={columns} 
         dataSource={applications} 
@@ -99,14 +125,22 @@ const MyApplicationsPage: React.FC = () => {
           onClick: () => navigate(`/application/${record.id}`),
         })}
         style={{          
-            background: '#ffffff',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            textAlign: 'center' 
+          background: '#ffffff',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center' 
         }}
       />
     </div>
   );
 };
 
-export default MyApplicationsPage; 
+const AppMyApplicationsPage: React.FC = () => {
+  return (
+    <App>
+      <MyApplicationsPage />
+    </App>
+  );
+};
+
+export default AppMyApplicationsPage; 

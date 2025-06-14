@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload } from 'antd';
+import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload, App, Space } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobService } from '../services/apiService';
@@ -17,10 +17,23 @@ interface JobLevel {
   name: string;
 }
 
+interface Skill {
+  id: number;
+  name: string | null;
+}
+
 interface WorkingModel {
   id: number;
   name: string;
   description: string | null;
+}
+
+interface Company {
+  id: number;
+  name: string;
+  description: string | null;
+  address: string | null;
+  location: string | null;
 }
 
 interface Article {
@@ -31,17 +44,19 @@ interface Article {
   requirement: string | null;
   address: string | null;
   location: string | null;
-  company: string | null;
+  company: Company;
   fromSalary: number | null;
   toSalary: number | null;
   dueDate: number;
   status: string;
-  industryId: number;
-  industry: Industry;
-  jobLevelId: number;
-  jobLevel: JobLevel;
-  workingModelId: number;
-  workingModel: WorkingModel;
+  industryIds: number[];
+  industry: Industry[];
+  jobLevelIds: number[];
+  jobLevel: JobLevel[];
+  workingModelIds: number[];
+  workingModels: WorkingModel[];
+  skillIds: number[];
+  skills: Skill[];
   userId: number;
   user: any | null;
   mainImageUrl: string;
@@ -53,50 +68,66 @@ const ArticleDetailPage: React.FC = () => {
   const [industries, setIndustries] = useState<Industry[]>([]);
   const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
   const [workingModels, setWorkingModels] = useState<WorkingModel[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const [imageUrl, setImageUrl] = useState<string>('');
+  const { message } = App.useApp();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [articleRes, industriesRes, jobLevelsRes, workingModelsRes] = await Promise.all([
+        const [articleRes, industriesRes, jobLevelsRes, workingModelsRes, skillsRes, companiesRes] = await Promise.all([
           jobService.getArticleById(Number(id)),
           jobService.getIndustries(),
           jobService.getJobLevels(),
-          jobService.getWorkingModels()
+          jobService.getWorkingModels(),
+          jobService.getSkills(),
+          jobService.getCompanies()
         ]);
 
         const article: Article = articleRes.data;
+        
+        // Log để kiểm tra dữ liệu
+        console.log('Article Response:', articleRes);
+        console.log('Industries Response:', industriesRes);
+        console.log('Job Levels Response:', jobLevelsRes);
+        console.log('Working Models Response:', workingModelsRes);
+        console.log('Skills Response:', skillsRes);
+        console.log('Companies Response:', companiesRes);
+
         setIndustries(industriesRes || []);
         setJobLevels(jobLevelsRes || []);
         setWorkingModels(workingModelsRes || []);
+        setSkills(skillsRes || []);
+        setCompanies(companiesRes || []);
 
-        console.log('industry ' + industriesRes.data);
-        console.log(jobLevelsRes.data);
-        console.log(workingModelsRes.data);
-        
         // Set form values
         form.setFieldsValue({
           title: article.title,
           content: article.content,
           requirement: article.requirement || '',
-          address: article.address || '',
-          location: article.location || '',
-          company: article.company || '',
+          companyId: article.company?.id,
+          company: article.company?.name || '',
+          companyDescription: article.company?.description || '',
+          companyAddress: article.company?.address || '',
+          companyLocation: article.company?.location || '',
           fromSalary: article.fromSalary,
           toSalary: article.toSalary,
           dueDate: article.dueDate ? dayjs.unix(article.dueDate) : null,
-          industryId: article.industryId,
-          jobLevelId: article.jobLevelId,
-          workingModelId: article.workingModelId
+          industryIds: article.industryIds || [],
+          jobLevelIds: article.jobLevelIds || [],
+          workingModelIds: article.workingModelIds || [],
+          skillIds: article.skillIds || []
         });
         
         if (article.mainImageUrl) {
           setImageUrl(article.mainImageUrl);
         }
       } catch (error) {
+        console.error('Error fetching data:', error);
         message.error('Failed to load article data');
       } finally {
         setLoading(false);
@@ -120,27 +151,73 @@ const ArticleDetailPage: React.FC = () => {
     }
   };
 
+  const handleCompanyChange = (companyId: number) => {
+    const selectedCompany = companies.find(company => company.id === companyId);
+    if (selectedCompany) {
+      form.setFieldsValue({
+        company: selectedCompany.name,
+        companyDescription: selectedCompany.description,
+        companyAddress: selectedCompany.address,
+        companyLocation: selectedCompany.location
+      });
+    }
+  };
+
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      const article = {
+      const articleData = {
         title: values.title,
         content: values.content,
         requirement: values.requirement || null,
         address: values.address || null,
         location: values.location || null,
-        company: values.company || null,
+        companyId: values.companyId,
+        company: {
+          name: values.company,
+          description: values.companyDescription || null,
+          address: values.companyAddress || null,
+          location: values.companyLocation || null
+        },
         fromSalary: values.fromSalary || null,
         toSalary: values.toSalary || null,
         dueDate: values.dueDate ? values.dueDate.unix() : null,
-        industryId: values.industryId,
-        jobLevelId: values.jobLevelId,
-        workingModelId: values.workingModelId
+        industryIds: values.industryIds,
+        jobLevelIds: values.jobLevelIds,
+        workingModelIds: values.workingModelIds,
+        skillIds: values.skillIds
       };
 
-      await jobService.updateArticle(Number(id), article);
-      message.success('Article updated successfully');
-      navigate(`/job-post/${id}`);
+      await jobService.updateArticle(Number(id), articleData);
+      
+      // Fetch lại dữ liệu mới
+      const articleRes = await jobService.getArticleById(Number(id));
+      const updatedArticle: Article = articleRes.data;
+      
+      // Reset form với dữ liệu mới
+      form.setFieldsValue({
+        title: updatedArticle.title,
+        content: updatedArticle.content,
+        requirement: updatedArticle.requirement || '',
+        companyId: updatedArticle.company?.id,
+        company: updatedArticle.company?.name || '',
+        companyDescription: updatedArticle.company?.description || '',
+        companyAddress: updatedArticle.company?.address || '',
+        companyLocation: updatedArticle.company?.location || '',
+        fromSalary: updatedArticle.fromSalary,
+        toSalary: updatedArticle.toSalary,
+        dueDate: updatedArticle.dueDate ? dayjs.unix(updatedArticle.dueDate) : null,
+        industryIds: updatedArticle.industryIds || [],
+        jobLevelIds: updatedArticle.jobLevelIds || [],
+        workingModelIds: updatedArticle.workingModelIds || [],
+        skillIds: updatedArticle.skillIds || []
+      });
+
+      if (updatedArticle.mainImageUrl) {
+        setImageUrl(updatedArticle.mainImageUrl);
+      }
+
+      message.success('Update article successfully!');
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to update article. Please try again.';
       message.error(errorMessage);
@@ -149,12 +226,18 @@ const ArticleDetailPage: React.FC = () => {
     }
   };
 
+  console.log('Industries:', industries);
+  console.log('Job Levels:', jobLevels);
+  console.log('Working Models:', workingModels);
+  console.log('Skills:', skills);
+  console.log('Companies:', companies);
+
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '20px' }}>
-      <Card title="Edit Job Post">
+      <Card title="Edit Article">
         <Form
           form={form}
-          name="editJobPost"
+          name="editArticle"
           onFinish={onFinish}
           layout="vertical"
         >
@@ -188,29 +271,49 @@ const ArticleDetailPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="company"
+            name="companyId"
             label="Company"
-            rules={[
-              { required: true, message: 'Please input the company name!' }
-            ]}
+            rules={[{ required: true, message: 'Please select a company!' }]}
           >
-            <Input placeholder="Enter company name" />
+            <Select 
+              placeholder="Select company"
+              style={{ width: '100%' }}
+              onChange={handleCompanyChange}
+            >
+              {companies && companies.map(company => (
+                <Select.Option key={company.id} value={company.id}>
+                  {company.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
-            name="address"
-            label="Address"
-            rules={[{ message: 'Please input the address!' }]}
+            name="company"
+            label="Company Name"
           >
-            <Input placeholder="Enter work address" />
+            <Input placeholder="" disabled />
           </Form.Item>
 
           <Form.Item
-            name="location"
-            label="Location"
-            rules={[{ message: 'Please input the location!' }]}
+            name="companyDescription"
+            label="Company Description"
           >
-            <Input placeholder="Enter location (e.g., Ho Chi Minh City)" />
+            <TextArea rows={4} placeholder="Enter company description" />
+          </Form.Item>
+
+          <Form.Item
+            name="companyAddress"
+            label="Company Address"
+          >
+            <Input placeholder="" disabled />
+          </Form.Item>
+
+          <Form.Item
+            name="companyLocation"
+            label="Company Location"
+          >
+            <Input placeholder="" disabled />
           </Form.Item>
 
           <Form.Item label="Salary Range" style={{ marginBottom: 0 }}>
@@ -248,44 +351,86 @@ const ArticleDetailPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="industryId"
-            label="Industry"
-            rules={[{ required: true, message: 'Please select the industry!' }]}
+            name="industryIds"
+            label="Industries"
+            rules={[{ required: true, message: 'Please select at least one industry!' }]}
           >
-            <Select placeholder="Select industry">
-              {industries.map(industry => (
-                <Select.Option key={industry.id} value={industry.id}>
-                  {industry.name}
-                </Select.Option>
-              ))}
+            <Select 
+              mode="multiple" 
+              placeholder="Select industries"
+              style={{ width: '100%' }}
+            >
+              {industries && industries.map(industry => {
+                console.log('Rendering industry:', industry);
+                return (
+                  <Select.Option key={industry.id} value={industry.id}>
+                    {industry.name || 'Unnamed Industry'}
+                  </Select.Option>
+                );
+              })}
             </Select>
           </Form.Item>
 
           <Form.Item
-            name="jobLevelId"
-            label="Job Level"
-            rules={[{ required: true, message: 'Please select the job level!' }]}
+            name="jobLevelIds"
+            label="Job Levels"
+            rules={[{ required: true, message: 'Please select at least one job level!' }]}
           >
-            <Select placeholder="Select job level">
-              {jobLevels.map(level => (
-                <Select.Option key={level.id} value={level.id}>
-                  {level.name}
-                </Select.Option>
-              ))}
+            <Select 
+              mode="multiple" 
+              placeholder="Select job levels"
+              style={{ width: '100%' }}
+            >
+              {jobLevels && jobLevels.map(level => {
+                console.log('Rendering job level:', level);
+                return (
+                  <Select.Option key={level.id} value={level.id}>
+                    {level.name || 'Unnamed Level'}
+                  </Select.Option>
+                );
+              })}
             </Select>
           </Form.Item>
 
           <Form.Item
-            name="workingModelId"
-            label="Working Model"
-            rules={[{ required: true, message: 'Please select the working model!' }]}
+            name="workingModelIds"
+            label="Working Models"
+            rules={[{ required: true, message: 'Please select at least one working model!' }]}
           >
-            <Select placeholder="Select working model">
-              {workingModels.map(model => (
-                <Select.Option key={model.id} value={model.id}>
-                  {model.name}
-                </Select.Option>
-              ))}
+            <Select 
+              mode="multiple" 
+              placeholder="Select working models"
+              style={{ width: '100%' }}
+            >
+              {workingModels && workingModels.map(model => {
+                console.log('Rendering working model:', model);
+                return (
+                  <Select.Option key={model.id} value={model.id}>
+                    {model.name || 'Unnamed Model'}
+                  </Select.Option>
+                );
+              })}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="skillIds"
+            label="Skills"
+            rules={[{ required: true, message: 'Please select at least one skill!' }]}
+          >
+            <Select 
+              mode="multiple" 
+              placeholder="Select skills"
+              style={{ width: '100%' }}
+            >
+              {skills && skills.map(skill => {
+                console.log('Rendering skill:', skill);
+                return (
+                  <Select.Option key={skill.id} value={skill.id}>
+                    {skill.name || 'Unnamed Skill'}
+                  </Select.Option>
+                );
+              })}
             </Select>
           </Form.Item>
 
@@ -306,9 +451,14 @@ const ArticleDetailPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              Update Job Post
-            </Button>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Update Article
+              </Button>
+              <Button onClick={() => navigate('/my-job-posts')}>
+                Cancel
+              </Button>
+            </Space>
           </Form.Item>
         </Form>
       </Card>
@@ -316,4 +466,12 @@ const ArticleDetailPage: React.FC = () => {
   );
 };
 
-export default ArticleDetailPage; 
+const AppArticleDetailPage: React.FC = () => {
+  return (
+    <App>
+      <ArticleDetailPage />
+    </App>
+  );
+};
+
+export default AppArticleDetailPage; 

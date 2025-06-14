@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload,Modal } from 'antd';
+import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload, Modal, Space } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { jobService } from '../../services/apiService';
@@ -23,19 +23,31 @@ interface WorkingModel {
   name: string;
 }
 
+interface Company {
+  id: number;
+  name: string;
+  description: string;
+  address: string;
+}
+
 interface JobArticle {
   title: string;
   content: string;
   requirement: string;
-  address: string;
   location: string;
-  company: string;
   fromSalary: number;
   toSalary: number;
   dueDate: string;
-  industryId: number;
-  jobLevelId: number;
-  workingModelId: number;
+  industryIds: number[];
+  jobLevelIds: number[];
+  workingModelIds: number[];
+  companyId: number;
+  skillIds: number[];
+}
+
+interface Skill {
+  id: number;
+  name: string;
 }
 
 interface JobPostProps {
@@ -47,21 +59,27 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
   const [industries, setIndustries] = useState<Industry[]>([]);
   const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
   const [workingModels, setWorkingModels] = useState<WorkingModel[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [industriesData, jobLevelsData, workingModelsData] = await Promise.all([
+        const [industriesData, jobLevelsData, workingModelsData, companiesData, skillsData] = await Promise.all([
           jobService.getIndustries(),
           jobService.getJobLevels(),
-          jobService.getWorkingModels()
+          jobService.getWorkingModels(),
+          jobService.getCompanies(),
+          jobService.getSkills()
         ]);
 
         setIndustries(industriesData);
         setJobLevels(jobLevelsData);
         setWorkingModels(workingModelsData);
+        setCompanies(companiesData);
+        setSkills(skillsData);
       } catch (error) {
         message.error('Failed to load form data');
       }
@@ -77,15 +95,15 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
         title: values.title,
         content: values.content,
         requirement: values.requirement,
-        address: values.address,
         location: values.location,
-        company: values.company,
         fromSalary: values.fromSalary,
         toSalary: values.toSalary,
         dueDate: values.dueDate.startOf('day').toISOString(),
-        industryId: values.industryId,
-        jobLevelId: values.jobLevelId,
-        workingModelId: values.workingModelId
+        industryIds: values.industryIds,
+        jobLevelIds: values.jobLevelIds,
+        workingModelIds: values.workingModelIds,
+        companyId: values.companyId,
+        skillIds: values.skillIds
       };
 
       const imageFile = values.image?.[0]?.originFileObj;
@@ -147,29 +165,17 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
           </Form.Item>
 
           <Form.Item
-            name="company"
+            name="companyId"
             label="Company"
-            rules={[
-              { required: true, message: 'Please input the company name!' }
-            ]}
+            rules={[{ required: true, message: 'Please select a company!' }]}
           >
-            <Input placeholder="Enter company name" />
-          </Form.Item>
-
-          <Form.Item
-            name="address"
-            label="Address"
-            rules={[{ message: 'Please input the address!' }]}
-          >
-            <Input placeholder="Enter work address" />
-          </Form.Item>
-
-          <Form.Item
-            name="location"
-            label="Location"
-            rules={[{ message: 'Please input the location!' }]}
-          >
-            <Input placeholder="Enter location (e.g., Ho Chi Minh City)" />
+            <Select placeholder="Select company">
+              {companies.map(company => (
+                <Select.Option key={company.id} value={company.id}>
+                  {company.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item label="Salary Range" style={{ marginBottom: 0 }}>
@@ -207,11 +213,15 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
           </Form.Item>
 
           <Form.Item
-            name="industryId"
-            label="Industry"
-            rules={[{ required: true, message: 'Please select the industry!' }]}
+            name="industryIds"
+            label="Industries"
+            rules={[{ required: true, message: 'Please select at least one industry!' }]}
           >
-            <Select placeholder="Select industry">
+            <Select 
+              mode="multiple" 
+              placeholder="Select industries"
+              style={{ width: '100%' }}
+            >
               {industries.map(industry => (
                 <Select.Option key={industry.id} value={industry.id}>
                   {industry.name}
@@ -221,11 +231,15 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
           </Form.Item>
 
           <Form.Item
-            name="jobLevelId"
-            label="Job Level"
-            rules={[{ required: true, message: 'Please select the job level!' }]}
+            name="jobLevelIds"
+            label="Job Levels"
+            rules={[{ required: true, message: 'Please select at least one job level!' }]}
           >
-            <Select placeholder="Select job level">
+            <Select 
+              mode="multiple" 
+              placeholder="Select job levels"
+              style={{ width: '100%' }}
+            >
               {jobLevels.map(level => (
                 <Select.Option key={level.id} value={level.id}>
                   {level.name}
@@ -235,14 +249,36 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
           </Form.Item>
 
           <Form.Item
-            name="workingModelId"
-            label="Working Model"
-            rules={[{ required: true, message: 'Please select the working model!' }]}
+            name="workingModelIds"
+            label="Working Models"
+            rules={[{ required: true, message: 'Please select at least one working model!' }]}
           >
-            <Select placeholder="Select working model">
+            <Select 
+              mode="multiple" 
+              placeholder="Select working models"
+              style={{ width: '100%' }}
+            >
               {workingModels.map(model => (
                 <Select.Option key={model.id} value={model.id}>
                   {model.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="skillIds"
+            label="Skills"
+            rules={[{ required: true, message: 'Please select at least one skill!' }]}
+          >
+            <Select 
+              mode="multiple" 
+              placeholder="Select skills"
+              style={{ width: '100%' }}
+            >
+              {skills.map(skill => (
+                <Select.Option key={skill.id} value={skill.id}>
+                  {skill.name}
                 </Select.Option>
               ))}
             </Select>
@@ -265,9 +301,14 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
-              Post Job
-            </Button>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={loading}>
+                Post Job
+              </Button>
+              <Button onClick={() => navigate('/my-job-posts')}>
+                Cancel
+              </Button>
+            </Space>
           </Form.Item>
         </Form>
       </Card>

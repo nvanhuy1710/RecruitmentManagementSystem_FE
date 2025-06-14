@@ -57,21 +57,29 @@ const LoginPage: React.FC = () => {
           >
             <Form.Item
               name="username"
-              rules={[{ required: true, message: 'Please input your username!' }]}
+              rules={[
+                { required: true, message: 'Please input your username!' },
+                { max: 50, message: 'Username cannot exceed 50 characters!' }
+              ]}
             >
               <Input 
                 prefix={<UserOutlined />}
                 placeholder="Username"
+                maxLength={50}
               />
             </Form.Item>
 
             <Form.Item
               name="password"
-              rules={[{ required: true, message: 'Please input your password!' }]}
+              rules={[
+                { required: true, message: 'Please input your password!' },
+                { max: 100, message: 'Password cannot exceed 100 characters!' }
+              ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="Password"
+                maxLength={100}
               />
             </Form.Item>
 
@@ -93,10 +101,17 @@ const LoginPage: React.FC = () => {
             </Form.Item>
 
             <div style={{ textAlign: 'center' }}>
-              Don't have an account?{' '}
-              <Button type="link" onClick={() => navigate('/register')}>
-                Register now
-              </Button>
+              <Space direction="vertical" size="small">
+                <Link to="/forgot-password">
+                  <Button type="link">Forgot password?</Button>
+                </Link>
+                <div>
+                  Don't have an account?{' '}
+                  <Button type="link" onClick={() => navigate('/register')}>
+                    Register now
+                  </Button>
+                </div>
+              </Space>
             </div>
           </Form>
         </Card>

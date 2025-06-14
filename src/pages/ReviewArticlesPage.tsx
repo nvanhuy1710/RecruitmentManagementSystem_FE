@@ -12,10 +12,12 @@ interface Article {
   title: string;
   content: string;
   requirement: string;
-  address: string;
-  location: string;
   companyWebsiteUrl: string;
-  company: string;
+  company: {
+    name: string;
+    address: string;
+    location: string;
+  };
   fromSalary: number;
   toSalary: number;
   dueDate: number;
@@ -91,7 +93,7 @@ const ReviewArticlesPage: React.FC = () => {
     },
     {
       title: 'Company',
-      dataIndex: 'company',
+      dataIndex: ['company', 'name'],
       key: 'company',
       width: '15%',
       align: 'center' as const,

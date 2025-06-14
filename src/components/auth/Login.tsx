@@ -32,8 +32,8 @@ const Login: React.FC = () => {
           <Form.Item
             name="email"
             rules={[
-              { required: true, message: 'Please input your email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              { required: true, message: 'Please input your username!' },
+              { type: 'email', message: 'Please enter a valid username!' }
             ]}
           >
             <Input prefix={<UserOutlined />} placeholder="Email" />

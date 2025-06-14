@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Typography, Button, Space, message, Avatar } from 'antd';
+import { Table, Typography, Button, Space, message, Avatar, Input } from 'antd';
 import { userService } from '../services/apiService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
+const { Search } = Input;
 
 interface User {
   id: number;
@@ -19,21 +20,27 @@ interface User {
 const UsersManagementPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchUsername, setSearchUsername] = useState('');
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [searchUsername]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const data = await userService.getAllUsers();
+      const params = searchUsername ? { 'username.contains': searchUsername } : undefined;
+      const data = await userService.getAllUsers(params);
       setUsers(data);
     } catch (error) {
       message.error('Failed to fetch users');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (value: string) => {
+    setSearchUsername(value);
   };
 
   const handleUpdateRole = async (userId: number) => {
@@ -106,6 +113,14 @@ const UsersManagementPage: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Title level={2}>Users Management</Title>
+      <div style={{ marginBottom: '16px' }}>
+        <Search
+          placeholder="Search by username"
+          allowClear
+          onChange={(e) => handleSearch(e.target.value)}
+          style={{ width: 300 }}
+        />
+      </div>
       <Table 
         columns={columns}
         dataSource={users}

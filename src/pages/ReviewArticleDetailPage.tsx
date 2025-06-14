@@ -12,28 +12,33 @@ interface Article {
   title: string;
   content: string;
   requirement: string;
-  address: string;
-  location: string;
-  companyWebsiteUrl: string;
-  company: string;
+  company: {
+    name: string;
+    address: string;
+    location: string;
+  };
   fromSalary: number;
   toSalary: number;
   dueDate: number;
   mainImageUrl?: string;
   status: string;
   createdAt: string;
-  industry: {
+  industries: {
     id: number;
     name: string;
-  };
-  jobLevel: {
+  }[];
+  jobLevels: {
     id: number;
     name: string;
-  };
-  workingModel: {
+  }[];
+  workingModels: {
     id: number;
     name: string;
-  };
+  }[];
+  skills: {
+    id: number;
+    name: string;
+  }[];
 }
 
 const ReviewArticleDetailPage: React.FC = () => {
@@ -119,15 +124,15 @@ const ReviewArticleDetailPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item label="Company">
-            <Input value={article.company} disabled />
+            <Input value={article.company.name} disabled />
           </Form.Item>
 
           <Form.Item label="Address">
-            <Input value={article.address} disabled />
+            <Input value={article.company.address} disabled />
           </Form.Item>
 
           <Form.Item label="Location">
-            <Input value={article.location} disabled />
+            <Input value={article.company.location} disabled />
           </Form.Item>
 
           <Form.Item label="Salary">
@@ -150,16 +155,25 @@ const ReviewArticleDetailPage: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item label="Industry">
-            <Input value={article.industry?.name} disabled />
+          <Form.Item label="Industries">
+            <Input 
+              value={article.industries?.map(industry => industry.name).join(', ')} 
+              disabled 
+            />
           </Form.Item>
 
-          <Form.Item label="Job Level">
-            <Input value={article.jobLevel?.name} disabled />
+          <Form.Item label="Job Levels">
+            <Input 
+              value={article.jobLevels?.map(level => level.name).join(', ')} 
+              disabled 
+            />
           </Form.Item>
 
-          <Form.Item label="Working Model">
-            <Input value={article.workingModel?.name} disabled />
+          <Form.Item label="Working Models">
+            <Input 
+              value={article.workingModels?.map(model => model.name).join(', ')} 
+              disabled 
+            />
           </Form.Item>
 
           <Form.Item label="Job Description">
@@ -176,10 +190,6 @@ const ReviewArticleDetailPage: React.FC = () => {
               disabled 
               autoSize={{ minRows: 4, maxRows: 8 }}
             />
-          </Form.Item>
-
-          <Form.Item label="Company Website">
-            <Input value={article.companyWebsiteUrl} disabled />
           </Form.Item>
 
           <Form.Item label="Status">

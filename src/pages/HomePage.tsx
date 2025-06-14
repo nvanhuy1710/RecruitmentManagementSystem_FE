@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space, Image, Tag, message } from 'antd';
-import { BuildOutlined, SearchOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
+import { Layout, Card, Row, Col, Button, Input, Select, Typography, Space, Image, Tag, message, Checkbox, Collapse, Modal } from 'antd';
+import { BuildOutlined, SearchOutlined, EnvironmentOutlined, ClockCircleOutlined, DollarOutlined, DownOutlined, UpOutlined, FilterOutlined } from '@ant-design/icons';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 import { jobService, userService } from '../services/apiService';
@@ -21,64 +21,101 @@ interface Industry {
   name: string;
 }
 
-interface Employer {
+interface Skill {
   id: number;
-  fullName: string;
+  name: string;
+}
+
+interface Company {
+  id: number;
+  name: string;
+  description: string;
+  address: string;
+}
+
+interface WorkingModel {
+  id: number;
+  name: string;
 }
 
 interface Article {
   id: number;
   title: string;
   location: string;
-  workingModel: {
+  workingModels: {
+    id: number;
     name: string;
+  }[];
+  company: {
+    name: string;
+    address: string;
+    location: string;
   };
   fromSalary: number;
   toSalary: number;
   mainImageUrl?: string;
-  company: string;
-  address: string;
 }
 
 const HomePage: React.FC = () => {
   const [jobLevels, setJobLevels] = useState<JobLevel[]>([]);
   const [industries, setIndustries] = useState<Industry[]>([]);
-  const [employers, setEmployers] = useState<Employer[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [workingModels, setWorkingModels] = useState<WorkingModel[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [searchParams, setSearchParams] = useState({
     title: '',
-    jobLevelId: undefined as number | undefined,
+    skillId: undefined as number | undefined,
     industryId: undefined as number | undefined,
-    userId: undefined as number | undefined
+    companyId: undefined as number | undefined,
+    sortByRelated: false,
+    jobLevelId: undefined as number | undefined,
+    workingModelId: undefined as number | undefined,
+    fromSalary: undefined as number | undefined,
+    toSalary: undefined as number | undefined
   });
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchFilters();
-    fetchEmployers();
     fetchArticles();
+    checkLoginStatus();
   }, []);
 
-  const fetchEmployers = async () => {
+  const checkLoginStatus = async () => {
     try {
-      const response = await userService.getAllEmployees();
-      setEmployers(response.data);
+      const userInfo = localStorage.getItem('userInfo');
+      setIsLoggedIn(!!userInfo);
     } catch (error) {
-      message.error('Failed to fetch employers');
+      setIsLoggedIn(false);
     }
   };
 
   const fetchFilters = async () => {
     try {
-      const [jobLevelsResponse, industriesResponse] = await Promise.all([
+      const [skillsResponse, industriesResponse, companiesResponse, jobLevelsResponse, workingModelsResponse] = await Promise.all([
+        jobService.getSkills(),
+        jobService.getIndustries(),
+        jobService.getCompanies(),
         jobService.getJobLevels(),
-        jobService.getIndustries()
+        jobService.getWorkingModels()
       ]);
-      setJobLevels(jobLevelsResponse);
-      setIndustries(industriesResponse);
+      setSkills(skillsResponse || []);
+      setIndustries(industriesResponse || []);
+      setCompanies(companiesResponse || []);
+      setJobLevels(jobLevelsResponse || []);
+      setWorkingModels(workingModelsResponse || []);
     } catch (error) {
       message.error('Failed to fetch filters');
+      setSkills([]);
+      setIndustries([]);
+      setCompanies([]);
+      setJobLevels([]);
+      setWorkingModels([]);
     }
   };
 
@@ -90,20 +127,36 @@ const HomePage: React.FC = () => {
       if (searchParams.title) {
         params['title.contains'] = searchParams.title;
       }
-      if (searchParams.jobLevelId) {
-        params['jobLevelId.equals'] = searchParams.jobLevelId;
+      if (searchParams.skillId) {
+        params['skillId.equals'] = searchParams.skillId;
       }
       if (searchParams.industryId) {
         params['industryId.equals'] = searchParams.industryId;
       }
-      if (searchParams.userId) {
-        params['userId.equals'] = searchParams.userId;
+      if (searchParams.companyId) {
+        params['companyId.equals'] = searchParams.companyId;
+      }
+      if (searchParams.jobLevelId) {
+        params['jobLevelId.equals'] = searchParams.jobLevelId;
+      }
+      if (searchParams.workingModelId) {
+        params['workingModelId.equals'] = searchParams.workingModelId;
+      }
+      if (searchParams.fromSalary) {
+        params['salary.greaterThanOrEqual'] = searchParams.fromSalary;
+      }
+      if (searchParams.toSalary) {
+        params['salary.lessThanOrEqual'] = searchParams.toSalary;
+      }
+      if (searchParams.sortByRelated) {
+        params['sortByRelated'] = true;
       }
 
       const response = await jobService.getPublicArticles(params);
-      setArticles(response.data);
+      setArticles(response.data || []);
     } catch (error) {
       message.error('Failed to fetch articles');
+      setArticles([]);
     } finally {
       setLoading(false);
     }
@@ -134,10 +187,10 @@ const HomePage: React.FC = () => {
           <Text style={{ fontSize: '18px', color: 'rgba(255,255,255,0.9)' }}>
             Discover thousands of job opportunities with all the information you need
           </Text>
-          <div style={{ maxWidth: '800px', margin: '40px auto' }}>
+          <div style={{ maxWidth: '1000px', margin: '40px auto' }}>
             <Card>
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={24} md={8}>
+              <Row gutter={[16, 16]} align="middle">
+                <Col flex="280px">
                   <Input
                     placeholder="Search by title"
                     value={searchParams.title}
@@ -145,22 +198,22 @@ const HomePage: React.FC = () => {
                     allowClear
                   />
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col flex="160px">
                   <Select
                     style={{ width: '100%' }}
-                    placeholder="Select Job Level"
+                    placeholder="Select Skill"
                     allowClear
-                    value={searchParams.jobLevelId}
-                    onChange={(value) => setSearchParams({ ...searchParams, jobLevelId: value })}
+                    value={searchParams.skillId}
+                    onChange={(value) => setSearchParams({ ...searchParams, skillId: value })}
                   >
-                    {jobLevels.map(level => (
-                      <Select.Option key={level.id} value={level.id}>
-                        {level.name}
+                    {skills.map(skill => (
+                      <Select.Option key={skill.id} value={skill.id}>
+                        {skill.name}
                       </Select.Option>
                     ))}
                   </Select>
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col flex="160px">
                   <Select
                     style={{ width: '100%' }}
                     placeholder="Select Industry"
@@ -175,36 +228,194 @@ const HomePage: React.FC = () => {
                     ))}
                   </Select>
                 </Col>
-                <Col xs={24} sm={12} md={6}>
+                <Col flex="160px">
                   <Select
                     style={{ width: '100%' }}
-                    placeholder="Select Employer"
+                    placeholder="Select Company"
                     allowClear
-                    value={searchParams.userId}
-                    onChange={(value) => setSearchParams({ ...searchParams, userId: value })}
+                    value={searchParams.companyId}
+                    onChange={(value) => setSearchParams({ ...searchParams, companyId: value })}
                   >
-                    {employers.map(employer => (
-                      <Select.Option key={employer.id} value={employer.id}>
-                        {employer.fullName}
+                    {companies.map(company => (
+                      <Select.Option key={company.id} value={company.id}>
+                        {company.name}
                       </Select.Option>
                     ))}
                   </Select>
                 </Col>
-                <Col xs={24} sm={24} md={4}>
+                <Col flex="100px">
+                  <Space>
                   <Button 
                     type="primary" 
                     icon={<SearchOutlined />} 
                     onClick={handleSearch}
                     loading={loading}
-                    style={{ width: '100%' }}
                   >
                     Search
                   </Button>
+                    <Button 
+                      icon={<FilterOutlined />}
+                      onClick={() => setIsFilterModalVisible(true)}
+                    >
+                      Filter
+                    </Button>
+                  </Space>
                 </Col>
               </Row>
             </Card>
           </div>
         </div>
+
+        <Modal
+          title="Filter Options"
+          open={isFilterModalVisible}
+          onOk={() => {
+            setIsFilterModalVisible(false);
+            handleSearch();
+          }}
+          onCancel={() => setIsFilterModalVisible(false)}
+          width={600}
+          footer={[
+            <Button 
+              key="clear" 
+              onClick={() => {
+                setSearchParams({
+                  title: searchParams.title,
+                  skillId: undefined,
+                  industryId: undefined,
+                  companyId: undefined,
+                  sortByRelated: searchParams.sortByRelated,
+                  jobLevelId: undefined,
+                  workingModelId: undefined,
+                  fromSalary: undefined,
+                  toSalary: undefined
+                });
+              }}
+            >
+              Clear Filters
+            </Button>,
+            <Button key="cancel" onClick={() => setIsFilterModalVisible(false)}>
+              Cancel
+            </Button>,
+            <Button 
+              key="submit" 
+              type="primary" 
+              onClick={() => {
+                setIsFilterModalVisible(false);
+                handleSearch();
+              }}
+            >
+              Apply Filters
+            </Button>
+          ]}
+        >
+          <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Select Skill"
+                allowClear
+                value={searchParams.skillId}
+                onChange={(value) => setSearchParams({ ...searchParams, skillId: value })}
+              >
+                {skills.map(skill => (
+                  <Select.Option key={skill.id} value={skill.id}>
+                    {skill.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={24}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Select Industry"
+                allowClear
+                value={searchParams.industryId}
+                onChange={(value) => setSearchParams({ ...searchParams, industryId: value })}
+              >
+                {industries.map(industry => (
+                  <Select.Option key={industry.id} value={industry.id}>
+                    {industry.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={24}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Select Company"
+                allowClear
+                value={searchParams.companyId}
+                onChange={(value) => setSearchParams({ ...searchParams, companyId: value })}
+              >
+                {companies.map(company => (
+                  <Select.Option key={company.id} value={company.id}>
+                    {company.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={24}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Select Job Level"
+                allowClear
+                value={searchParams.jobLevelId}
+                onChange={(value) => setSearchParams({ ...searchParams, jobLevelId: value })}
+              >
+                {jobLevels.map(level => (
+                  <Select.Option key={level.id} value={level.id}>
+                    {level.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={24}>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Select Working Model"
+                allowClear
+                value={searchParams.workingModelId}
+                onChange={(value) => setSearchParams({ ...searchParams, workingModelId: value })}
+              >
+                {workingModels.map(model => (
+                  <Select.Option key={model.id} value={model.id}>
+                    {model.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col span={24}>
+              <Space style={{ width: '100%' }}>
+                <Input
+                  type="number"
+                  placeholder="Min Salary"
+                  value={searchParams.fromSalary}
+                  onChange={(e) => setSearchParams({ ...searchParams, fromSalary: e.target.value ? Number(e.target.value) : undefined })}
+                  style={{ width: '60%' }}
+                />
+                <span>-</span>
+                <Input
+                  type="number"
+                  placeholder="Max Salary"
+                  value={searchParams.toSalary}
+                  onChange={(e) => setSearchParams({ ...searchParams, toSalary: e.target.value ? Number(e.target.value) : undefined })}
+                  style={{ width: '60%' }}
+                />
+              </Space>
+            </Col>
+            {isLoggedIn && (
+              <Col span={24}>
+                <Checkbox
+                  checked={searchParams.sortByRelated}
+                  onChange={(e) => setSearchParams({ ...searchParams, sortByRelated: e.target.checked })}
+                >
+                  Sort by related
+                </Checkbox>
+              </Col>
+            )}
+          </Row>
+        </Modal>
 
         {/* Featured Jobs Section */}
         <div style={{ padding: '40px 50px' }}>
@@ -235,16 +446,23 @@ const HomePage: React.FC = () => {
                     description={
                       <div>
                         <BuildOutlined />
-                        <Text strong >{article.company}</Text>
+                        <Text strong >{article.company.name}</Text>
                         <br />
                         <Space>
                           <EnvironmentOutlined />
-                          <Text type="secondary">{article.location}</Text>
+                          <Text type="secondary">{article.company.address}</Text>
                         </Space>
                         <br />
                         <Space>
                           <ClockCircleOutlined />
-                          <Text >{article.workingModel.name}</Text>
+                          <Text>
+                            {article.workingModels?.map((model, index) => (
+                              <span key={model.id}>
+                                {model.name}
+                                {index < (article.workingModels?.length || 0) - 1 ? ', ' : ''}
+                              </span>
+                            )) || 'Not specified'}
+                          </Text>
                         </Space>
                         <br />
                         <Space>

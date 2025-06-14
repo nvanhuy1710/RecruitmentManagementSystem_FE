@@ -8,7 +8,9 @@ import {
   AuditOutlined,
   TeamOutlined,
   UserOutlined,
-  FileSearchOutlined
+  FileSearchOutlined,
+  BankOutlined,
+  BuildOutlined
 } from '@ant-design/icons';
 import { authService } from '../../services/apiService';
 import type { MenuProps } from 'antd';
@@ -37,13 +39,19 @@ const SideMenu: React.FC<SideMenuProps> = ({ collapsed, onCollapse }) => {
     }
   };
 
-  const baseMenuItems = [
+  const baseMenuItems = !userInfo || userInfo?.roleName === 'USER' ? [
     {
       key: '/',
       icon: <HomeOutlined />,
       label: <Link to="/">Home</Link>,
+    },
+    {
+      key: '/companies',
+      icon: <BuildOutlined />,
+      label: <Link to="/view-companies">Companies</Link>,
+      roles: ['USER'],
     }
-  ];
+  ] : [];
 
   const profileMenuItem = userInfo ? [
     {
@@ -56,16 +64,22 @@ const SideMenu: React.FC<SideMenuProps> = ({ collapsed, onCollapse }) => {
   const userMenuItems = userInfo?.roleName === 'USER' ? [
     {
       key: '/my-applications',
-      icon: <AuditOutlined />,
+      icon: <ProfileOutlined />,
       label: <Link to="/my-applications">My Applications</Link>,
+      roles: ['USER'],
     }
   ] : [];
 
   const employerMenuItems = userInfo?.roleName === 'EMPLOYER' ? [
     {
+      key: '/dashboard',
+      icon: <HomeOutlined />,
+      label: <Link to="/dashboard">Dashboard</Link>,
+    },
+    {
       key: '/my-job-posts',
       icon: <ProfileOutlined />,
-      label: <Link to="/my-job-posts">My Job Posts</Link>,
+      label: <Link to="/my-job-posts">My Articles</Link>,
     },
     {
       key: '/applicants',
@@ -85,6 +99,12 @@ const SideMenu: React.FC<SideMenuProps> = ({ collapsed, onCollapse }) => {
       key: '/users',
       icon: <TeamOutlined />,
       label: <Link to="/users">Users Management</Link>,
+      roles: ['ADMIN'],
+    },
+    {
+      key: '/companies',
+      icon: <BankOutlined />,
+      label: <Link to="/companies">Companies</Link>,
       roles: ['ADMIN'],
     }
   ] : [];

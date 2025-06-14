@@ -6,6 +6,7 @@ import MainLayout from './components/layout/MainLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import JobPostPage from './pages/JobPostPage';
 import MyJobPostsPage from './pages/MyJobPostsPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
@@ -21,6 +22,9 @@ import MyApplicationsPage from './pages/MyApplicationsPage';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import ApplicantsPage from './pages/ApplicantsPage';
 import UsersManagementPage from './pages/UsersManagementPage';
+import EmployerDashboardPage from './pages/EmployerDashboardPage';
+import CompanyManagementPage from './pages/CompanyManagementPage';
+import CompaniesPage from './pages/CompaniesPage';
 
 function App() {
   return (
@@ -30,6 +34,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/" element={<MainLayout children={<Outlet />} />}>
               <Route index element={<HomePage />} />
               <Route path="profile" element={<ProfilePage />} />
@@ -44,6 +49,10 @@ function App() {
               <Route path="/application/:id" element={<ApplicationDetailPage />} />
               <Route path="applicants" element={<ApplicantsPage />} />
               <Route path="users" element={<UsersManagementPage />} />
+              <Route path="dashboard" element={<EmployerDashboardPage />} />
+              <Route path="companies" element={<CompanyManagementPage />} />
+              <Route path="view-companies" element={<CompaniesPage />} />
+
             </Route>
           </Routes>
         </Router>

@@ -14,20 +14,28 @@ interface Article {
   requirement: string;
   address: string;
   location: string;
-  company: string;
+  company: {
+    name: string;
+    address: string;
+    location: string;
+    description: string;
+  };
   fromSalary: number;
   toSalary: number;
   dueDate: number;
   mainImageUrl?: string;
-  workingModel: {
+  workingModels: {
     name: string;
-  };
-  jobLevel: {
+  }[];
+  jobLevels: {
     name: string;
-  };
-  industry: {
+  }[];
+  industries: {
     name: string;
-  };
+  }[];
+  skills: {
+    name: string;
+  }[];
 }
 
 interface UserInfo {
@@ -59,7 +67,13 @@ const ViewArticlePage: React.FC = () => {
     try {
       setLoading(true);
       const response = await jobService.getArticleById(parseInt(id!));
-      setArticle(response.data);
+      const articleData = response.data;
+      setArticle({
+        ...articleData,
+        workingModels: articleData.workingModels || [],
+        jobLevels: articleData.jobLevels || [],
+        industries: articleData.industries || []
+      });
     } catch (error) {
       console.error('Error fetching article:', error);
     } finally {
@@ -117,24 +131,45 @@ const ViewArticlePage: React.FC = () => {
           <Space direction="vertical" size="small" style={{ width: '100%' }}>
             <Space>
               <BuildOutlined />
-              <Text strong>{article.company}</Text>
+              <Text strong>{article.company.name}</Text>
             </Space>
             <Space>
               <EnvironmentOutlined />
-              <Text>{article.address}</Text>
+              <Text>{article.company.address}</Text>
             </Space>
-            <Text>{article.location}</Text>
+            <Text>{article.company.location}</Text>
             <Space>
               <ClockCircleOutlined />
-              <Text>{article.workingModel.name}</Text>
+              <Text>
+                {article.workingModels.map((model, index) => (
+                  <span key={index}>
+                    {model.name}
+                    {index < article.workingModels.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </Text>
             </Space>
             <Space>
               <TeamOutlined />
-              <Text>{article.jobLevel.name}</Text>
+              <Text>
+                {article.jobLevels.map((level, index) => (
+                  <span key={index}>
+                    {level.name}
+                    {index < article.jobLevels.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </Text>
             </Space>
             <Space>
               <AppstoreOutlined />
-              <Text>{article.industry.name}</Text>
+              <Text>
+                {article.industries.map((industry, index) => (
+                  <span key={index}>
+                    {industry.name}
+                    {index < article.industries.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </Text>
             </Space>
             <Space>
               <DollarOutlined />
