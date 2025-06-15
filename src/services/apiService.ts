@@ -699,7 +699,7 @@ export const getApplicationById = async (id: string) => {
 export const companyService = {
   getCompanies: async () => {
     try {
-      const response = await apiClient.get('/public/api/companies');
+      const response = await apiClient.get('/api/companies');
       return response.data;
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -727,12 +727,22 @@ export const companyService = {
     }
   },
 
-  deleteCompany: async (id: number) => {
+  disableCompany: async (id: number) => {
     try {
-      const response = await apiClient.delete(`/api/companies/${id}`);
+      const response = await apiClient.put(`/api/companies/${id}/disable`);
       return response.data;
     } catch (error) {
-      console.error('Error deleting company:', error);
+      console.error('Error disabling company:', error);
+      throw error;
+    }
+  },
+
+  enableCompany: async (id: number) => {
+    try {
+      const response = await apiClient.put(`/api/companies/${id}/enable`);
+      return response.data;
+    } catch (error) {
+      console.error('Error enabling company:', error);
       throw error;
     }
   },

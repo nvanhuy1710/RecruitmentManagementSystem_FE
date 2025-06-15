@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Typography, Space, message, Modal, Form, Input, Card, Upload, Image } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, StopOutlined, UploadOutlined, PlayCircleOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { companyService, authService } from '../services/apiService';
 
 const { Title } = Typography;
@@ -13,6 +13,7 @@ interface Company {
   location: string;
   description: string;
   imageUrl?: string;
+  status: string;
 }
 
 const CompanyManagementPage: React.FC = () => {
@@ -98,13 +99,23 @@ const CompanyManagementPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDisable = async (id: number) => {
     try {
-      await companyService.deleteCompany(id);
-      message.success('Company deleted successfully');
+      await companyService.disableCompany(id);
+      message.success('Company disabled successfully');
       fetchCompanies();
     } catch (error) {
-      message.error('Failed to delete company');
+      message.error('Failed to disable company');
+    }
+  };
+
+  const handleEnable = async (id: number) => {
+    try {
+      await companyService.enableCompany(id);
+      message.success('Company enabled successfully');
+      fetchCompanies();
+    } catch (error) {
+      message.error('Failed to enable company');
     }
   };
 
@@ -173,6 +184,21 @@ const CompanyManagementPage: React.FC = () => {
             onClick={() => showModal(record)}
             title="Edit"
           />
+          {record.status === 'DISABLED' ? (
+            <Button 
+              type="primary"
+              icon={<UnlockOutlined />}
+              onClick={() => handleEnable(record.id)}
+              title="Enable"
+            />
+          ) : (
+            <Button 
+              danger 
+              icon={<LockOutlined />}
+              onClick={() => handleDisable(record.id)}
+              title="Disable"
+            />
+          )}
         </Space>
       ),
     },
