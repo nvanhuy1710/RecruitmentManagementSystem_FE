@@ -21,17 +21,25 @@ const UsersManagementPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchUsername, setSearchUsername] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchUsers();
-  }, [searchUsername]);
+  }, [searchUsername, currentPage, pageSize]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const params = searchUsername ? { 'username.contains': searchUsername } : undefined;
-      const data = await userService.getAllUsers(params);
-      setUsers(data);
+      const params = {
+        page: (currentPage - 1).toString(),
+        size: pageSize.toString(),
+        ...(searchUsername ? { 'username.contains': searchUsername } : {})
+      };
+      const response = await userService.getAllUsers(params);
+      setUsers(response.data);
+      setTotal(response.total);
     } catch (error) {
       message.error('Failed to fetch users');
     } finally {
@@ -41,6 +49,7 @@ const UsersManagementPage: React.FC = () => {
 
   const handleSearch = (value: string) => {
     setSearchUsername(value);
+    setCurrentPage(1); // Reset về trang 1 khi search
   };
 
   const handleUpdateRole = async (userId: number) => {
@@ -126,6 +135,17 @@ const UsersManagementPage: React.FC = () => {
         dataSource={users}
         loading={loading}
         rowKey="id"
+        pagination={{
+          current: currentPage,
+          pageSize: pageSize,
+          total: total,
+          onChange: (page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          },
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} items`,
+        }}
       />
     </div>
   );

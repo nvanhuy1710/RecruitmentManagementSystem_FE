@@ -12,14 +12,16 @@ const MyApplicationsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [totalItems, setTotalItems] = useState(0);
   const navigate = useNavigate();
   const { message: appMessage } = App.useApp();
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const data = await getMyApplicants(currentPage - 1, pageSize, statusFilter);
-        setApplications(data);
+        const response = await getMyApplicants(currentPage - 1, pageSize, statusFilter);
+        setApplications(response.data);
+        setTotalItems(response.total);
       } catch (error) {
         console.error('Error fetching applications:', error);
       } finally {
@@ -113,12 +115,12 @@ const MyApplicationsPage: React.FC = () => {
         pagination={{
           current: currentPage,
           pageSize: pageSize,
+          total: totalItems,
           onChange: (page, size) => {
             setCurrentPage(page);
             setPageSize(size);
           },
           showSizeChanger: true,
-          showQuickJumper: true,
           showTotal: (total) => `Total ${total} items`,
         }}
         onRow={(record) => ({

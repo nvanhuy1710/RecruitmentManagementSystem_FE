@@ -24,11 +24,14 @@ const CompanyManagementPage: React.FC = () => {
   const [form] = Form.useForm();
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     checkRole();
     fetchCompanies();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const checkRole = async () => {
     try {
@@ -42,8 +45,12 @@ const CompanyManagementPage: React.FC = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const response = await companyService.getCompanies();
-      setCompanies(response || []);
+      const response = await companyService.getCompanies({
+        page: (currentPage - 1).toString(),
+        size: pageSize.toString()
+      });
+      setCompanies(response.data || []);
+      setTotal(response.total);
     } catch (error) {
       message.error('Failed to fetch companies');
     } finally {
@@ -227,6 +234,17 @@ const CompanyManagementPage: React.FC = () => {
           dataSource={companies}
           rowKey="id"
           loading={loading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: total,
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            },
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} items`,
+          }}
         />
 
         <Modal

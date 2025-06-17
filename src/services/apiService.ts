@@ -270,13 +270,32 @@ export const authService = {
     }
   },
 
-  getNotifications: async () => {
+  getNotifications: async (page: number = 0, size: number = 2) => {
     try {
-      const response = await apiClient.get('/api/account/notifications');
-      return response.data;
+      const response = await apiClient.get('/api/account/notifications', {
+        params: {
+          page,
+          size,
+          sort: 'id,desc'
+        }
+      });
+      return {
+        data: response.data,
+        total: parseInt(response.headers['x-total-count'] || '0', 10)
+      };
     } catch (error) {
       console.error('Error fetching notifications:', error);
       throw error;
+    }
+  },
+
+  getUnviewedNotificationCount: async () => {
+    try {
+      const response = await apiClient.get('/api/account/notifications/count');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching unviewed notification count:', error);
+      return 0;
     }
   },
 
@@ -305,8 +324,16 @@ export const userService = {
 
   getAllUsers: async (params?: Record<string, string>) => {
     try {
-      const response = await apiClient.get('/public/api/users', { params });
-      return response.data;
+      const response = await apiClient.get('/public/api/users', { 
+        params: {
+          ...params,
+          sort: 'id,desc'
+        }
+      });
+      return {
+        data: response.data,
+        total: parseInt(response.headers['x-total-count'] || '0', 10)
+      };
     } catch (error) {
       console.error('Error fetching users:', error);
       throw error;
@@ -531,7 +558,10 @@ export const jobService = {
       },
       withCredentials: true
     });
-    return response;
+    return {
+      data: response.data,
+      total: parseInt(response.headers['x-total-count'] || '0', 10)
+    };
   },
 
   approveArticle: async (id: number) => {
@@ -587,6 +617,24 @@ export const jobService = {
       return response.data;
     } catch (error) {
       console.error('Error closing article:', error);
+      throw error;
+    }
+  },
+
+  getPublicCompanies: async (params?: Record<string, string>) => {
+    try {
+      const response = await apiClient.get('/public/api/companies', { 
+        params: {
+          ...params,
+          sort: 'id,desc'
+        }
+      });
+      return {
+        data: response.data,
+        total: parseInt(response.headers['x-total-count'] || '0', 10)
+      };
+    } catch (error) {
+      console.error('Error fetching public companies:', error);
       throw error;
     }
   },
@@ -679,7 +727,10 @@ export const getMyApplicants = async (page: number, size: number, status?: strin
       params,
       withCredentials: true
     });
-    return response.data;
+    return {
+      data: response.data,
+      total: parseInt(response.headers['x-total-count'] || '0', 10)
+    };
   } catch (error) {
     console.error('Error fetching my applications:', error);
     throw error;
@@ -697,12 +748,38 @@ export const getApplicationById = async (id: string) => {
 };
 
 export const companyService = {
-  getCompanies: async () => {
+  getCompanies: async (params?: Record<string, string>) => {
     try {
-      const response = await apiClient.get('/api/companies');
-      return response.data;
+      const response = await apiClient.get('/api/companies', { 
+        params: {
+          ...params,
+          sort: 'id,desc'
+        }
+      });
+      return {
+        data: response.data,
+        total: parseInt(response.headers['x-total-count'] || '0', 10)
+      };
     } catch (error) {
       console.error('Error fetching companies:', error);
+      throw error;
+    }
+  },
+
+  getPublicCompanies: async (params?: Record<string, string>) => {
+    try {
+      const response = await apiClient.get('/public/api/companies', { 
+        params: {
+          ...params,
+          sort: 'id,desc'
+        }
+      });
+      return {
+        data: response.data,
+        total: parseInt(response.headers['x-total-count'] || '0', 10)
+      };
+    } catch (error) {
+      console.error('Error fetching public companies:', error);
       throw error;
     }
   },

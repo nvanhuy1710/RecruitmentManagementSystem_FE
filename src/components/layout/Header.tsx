@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Button, Space, Dropdown, message, Avatar, Menu, Badge } from 'antd';
+import { Layout, Button, Space, Dropdown, message, Avatar, Menu, Badge, Pagination } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserOutlined, LogoutOutlined, BellOutlined, RightOutlined } from '@ant-design/icons';
 import { authService, connectNotificationWebSocket } from '../../services/apiService';
@@ -20,7 +20,20 @@ const Header: React.FC = () => {
   const [userInfo, setUserInfo] = useState<any>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [stompClient, setStompClient] = useState<Client | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(10);
+  const [totalNotifications, setTotalNotifications] = useState(0);
+  const [unviewedCount, setUnviewedCount] = useState(0);
   const navigate = useNavigate();
+
+  const fetchUnviewedCount = async () => {
+    try {
+      const count = await authService.getUnviewedNotificationCount();
+      setUnviewedCount(count);
+    } catch (error) {
+      console.error('Error fetching unviewed count:', error);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,10 +45,10 @@ const Header: React.FC = () => {
           setIsAuthenticated(true);
           if (user.roleName === 'USER') {
             fetchNotifications();
-            // Connect to WebSocket
+            fetchUnviewedCount();
             const client = connectNotificationWebSocket(user.id, () => {
-              // Khi nhận thông báo mới từ WebSocket, gọi lại API lấy tất cả thông báo
               fetchNotifications();
+              fetchUnviewedCount();
               message.info('New notification received');
             });
             setStompClient(client);
@@ -47,7 +60,6 @@ const Header: React.FC = () => {
     };
     checkAuth();
 
-    // Cleanup WebSocket connection
     return () => {
       if (stompClient) {
         stompClient.deactivate();
@@ -57,12 +69,26 @@ const Header: React.FC = () => {
 
   const fetchNotifications = async () => {
     try {
-      const data = await authService.getNotifications();
-      setNotifications(data);
+      const response = await authService.getNotifications(currentPage, pageSize);
+      console.log('Notification response:', response);
+      setNotifications(response.data);
+      setTotalNotifications(response.total);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      setNotifications([]);
+      setTotalNotifications(0);
     }
   };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page - 1);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && userInfo?.roleName === 'USER') {
+      fetchNotifications();
+    }
+  }, [currentPage]);
 
   const handleLogout = async () => {
     try {
@@ -85,6 +111,7 @@ const Header: React.FC = () => {
             n.id === notification.id ? { ...n, viewed: true } : n
           )
         );
+        fetchUnviewedCount();
       } catch (error) {
         console.error('Error updating notification viewed status:', error);
       }
@@ -103,35 +130,51 @@ const Header: React.FC = () => {
   const notificationMenu = (
     <Menu style={{ width: 300, maxHeight: 400, overflow: 'auto' }}>
       {notifications.length > 0 ? (
-        notifications.map((notification) => (
-          <Menu.Item 
-            key={notification.id}
-            style={{ 
-              backgroundColor: notification.viewed ? 'inherit' : '#f0f7ff',
-              padding: '12px 16px',
-              cursor: 'pointer'
-            }}
-            onClick={() => handleNotificationClick(notification)}
-          >
-            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontWeight: notification.viewed ? 'normal' : 'bold' }}>
-                {notification.companyName} company has a new job post.
-              </span>
-              <span style={{ 
-                fontSize: '12px', 
-                color: '#1890ff', 
-                marginLeft: '4px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <RightOutlined style={{ marginLeft: '4px' }} />
-              </span>
-            </div>
-          </Menu.Item>
-        ))
+        <>
+          {notifications.map((notification) => (
+            <Menu.Item 
+              key={notification.id}
+              style={{ 
+                backgroundColor: notification.viewed ? 'inherit' : '#f0f7ff',
+                padding: '12px 16px',
+                cursor: 'pointer'
+              }}
+              onClick={() => handleNotificationClick(notification)}
+            >
+              <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: notification.viewed ? 'normal' : 'bold' }}>
+                  {notification.companyName} company has a new job post.
+                </span>
+                <span style={{ 
+                  fontSize: '12px', 
+                  color: '#1890ff', 
+                  marginLeft: '4px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <RightOutlined style={{ marginLeft: '4px' }} />
+                </span>
+              </div>
+            </Menu.Item>
+          ))}
+          {totalNotifications > pageSize && (
+            <>
+              <Menu.Divider />
+              <div style={{ padding: '8px 16px', textAlign: 'center' }}>
+                <Pagination
+                  size="small"
+                  current={currentPage + 1}
+                  pageSize={pageSize}
+                  total={totalNotifications}
+                  onChange={handlePageChange}
+                />
+              </div>
+            </>
+          )}
+        </>
       ) : (
-        <Menu.Item disabled>Chưa có thông báo nào</Menu.Item>
+        <Menu.Item disabled>No notifications</Menu.Item>
       )}
     </Menu>
   );
@@ -165,7 +208,7 @@ const Header: React.FC = () => {
         {isAuthenticated && userInfo?.roleName === 'USER' && (
           <Dropdown overlay={notificationMenu} trigger={['click']} placement="bottomRight">
             <Badge 
-              count={notifications.filter(n => !n.viewed).length} 
+              count={unviewedCount} 
               size="small"
               style={{ 
                 marginRight: '10px',

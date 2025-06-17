@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Button, message, Image, Space } from 'antd';
+import { Card, Row, Col, Typography, Button, message, Image, Space, Pagination } from 'antd';
 import { HeartOutlined, HeartFilled } from '@ant-design/icons';
 import { companyService, authService } from '../services/apiService';
 
@@ -19,11 +19,14 @@ const CompaniesPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isUser, setIsUser] = useState(false);
   const [followedCompanies, setFollowedCompanies] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     fetchCompanies();
     checkUserRole();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const checkUserRole = async () => {
     try {
@@ -41,8 +44,12 @@ const CompaniesPage: React.FC = () => {
   const fetchCompanies = async () => {
     try {
       setLoading(true);
-      const response = await companyService.getCompanies();
-      setCompanies(response || []);
+      const response = await companyService.getPublicCompanies({
+        page: (currentPage - 1).toString(),
+        size: pageSize.toString()
+      });
+      setCompanies(response.data || []);
+      setTotal(response.total);
     } catch (error) {
       message.error('Failed to fetch companies');
     } finally {
@@ -120,6 +127,19 @@ const CompaniesPage: React.FC = () => {
           </Col>
         ))}
       </Row>
+      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+        <Pagination
+          current={currentPage}
+          pageSize={pageSize}
+          total={total}
+          onChange={(page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+          }}
+          showSizeChanger
+          showTotal={(total) => `Total ${total} items`}
+        />
+      </div>
     </div>
   );
 };

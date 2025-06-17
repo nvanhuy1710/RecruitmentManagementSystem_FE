@@ -44,7 +44,7 @@ const ReviewArticlesPage: React.FC = () => {
       setLoading(true);
       const response = await jobService.getPendingArticles(currentPage - 1, pageSize);
       setArticles(response.data);
-      setTotal(parseInt(response.headers['x-total-count'] || '0'));
+      setTotal(response.total);
     } catch (error: any) {
       console.error('Error fetching articles:', error);
       message.error('Failed to fetch articles');
@@ -192,7 +192,6 @@ const ReviewArticlesPage: React.FC = () => {
             setPageSize(size);
           },
           showSizeChanger: true,
-          showQuickJumper: true,
           showTotal: (total) => `Total ${total} items`,
         }}
         style={{
