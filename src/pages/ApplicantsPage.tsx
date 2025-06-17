@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Typography, Select, Space, Tag, Button, message, Modal } from 'antd';
+import { Table, Typography, Select, Space, Tag, Button, message, Modal, Tooltip } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { getApplicants, jobService, ApplicationStatus, applicantService } from '../services/apiService';
-import { CheckOutlined, CloseOutlined, CalculatorOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, CalculatorOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -173,26 +173,26 @@ const ApplicantsPage: React.FC = () => {
         <Space>
           {record.status === ApplicationStatus.SUBMITTED && (
             <>
-              <Button 
-                type="primary" 
-                icon={<CheckOutlined />} 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleApprove(record.id);
-                }}
-              >
-                Accept
-              </Button>
-              <Button 
-                danger 
-                icon={<CloseOutlined />} 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDecline(record.id);
-                }}
-              >
-                Decline
-              </Button>
+              <Tooltip title="Accept">
+                <Button 
+                  type="primary" 
+                  icon={<CheckCircleOutlined />} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleApprove(record.id);
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Decline">
+                <Button 
+                  danger 
+                  icon={<CloseCircleOutlined />} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDecline(record.id);
+                  }}
+                />
+              </Tooltip>
             </>
           )}
         </Space>

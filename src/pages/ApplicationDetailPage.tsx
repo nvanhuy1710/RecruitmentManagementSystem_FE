@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Typography, Space, Tag, Button, message, List } from 'antd';
+import { Card, Typography, Space, Tag, Button, message, List, Tooltip } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getApplicationById, ApplicationStatus, applicantService, authService } from '../services/apiService';
-import { CheckOutlined, CloseOutlined, FileOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, FileOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -147,20 +147,20 @@ const ApplicationDetailPage: React.FC = () => {
 
           {canShowActions() && (
             <Space>
-              <Button 
-                type="primary" 
-                icon={<CheckOutlined />} 
-                onClick={handleApprove}
-              >
-                Accept
-              </Button>
-              <Button 
-                danger 
-                icon={<CloseOutlined />} 
-                onClick={handleDecline}
-              >
-                Decline
-              </Button>
+              <Tooltip title="Accept">
+                <Button 
+                  type="primary" 
+                  icon={<CheckCircleOutlined />} 
+                  onClick={handleApprove}
+                />
+              </Tooltip>
+              <Tooltip title="Decline">
+                <Button 
+                  danger 
+                  icon={<CloseCircleOutlined />} 
+                  onClick={handleDecline}
+                />
+              </Tooltip>
             </Space>
           )}
         </Space>
