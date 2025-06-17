@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Typography, Button, Space, message, Avatar, Input } from 'antd';
+import { Table, Typography, Button, Space, message, Avatar, Input, Tooltip } from 'antd';
+import { UserSwitchOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { userService } from '../services/apiService';
 import dayjs from 'dayjs';
 
@@ -15,6 +16,7 @@ interface User {
   birth: string;
   avatarUrl?: string;
   roleName: string;
+  locked: boolean | null;
 }
 
 const UsersManagementPage: React.FC = () => {
@@ -49,16 +51,36 @@ const UsersManagementPage: React.FC = () => {
 
   const handleSearch = (value: string) => {
     setSearchUsername(value);
-    setCurrentPage(1); // Reset về trang 1 khi search
+    setCurrentPage(1);
   };
 
   const handleUpdateRole = async (userId: number) => {
     try {
       await userService.updateUserRole(userId, 'EMPLOYER');
       message.success('User role updated successfully');
-      fetchUsers(); // Refresh danh sách
+      fetchUsers();
     } catch (error) {
       message.error('Failed to update user role');
+    }
+  };
+
+  const handleLockUser = async (userId: number) => {
+    try {
+      await userService.lockUser(userId);
+      message.success('User locked successfully');
+      fetchUsers();
+    } catch (error) {
+      message.error('Failed to lock user');
+    }
+  };
+
+  const handleUnlockUser = async (userId: number) => {
+    try {
+      await userService.unlockUser(userId);
+      message.success('User unlocked successfully');
+      fetchUsers();
+    } catch (error) {
+      message.error('Failed to unlock user');
     }
   };
 
@@ -106,13 +128,35 @@ const UsersManagementPage: React.FC = () => {
       key: 'action',
       render: (_: any, record: User) => (
         <Space>
+          {record.roleName !== 'ADMIN' && (
+            record.locked ? (
+              <Tooltip title="Unlock account">
+                <Button 
+                  type="primary"
+                  style={{ backgroundColor: '#52c41a' }}
+                  icon={<UnlockOutlined />}
+                  onClick={() => handleUnlockUser(record.id)}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title="Lock account">
+                <Button 
+                  type="primary"
+                  danger
+                  icon={<LockOutlined />}
+                  onClick={() => handleLockUser(record.id)}
+                />
+              </Tooltip>
+            )
+          )}
           {record.roleName !== 'EMPLOYER' && record.roleName !== 'ADMIN' && (
-            <Button 
-              type="primary"
-              onClick={() => handleUpdateRole(record.id)}
-            >
-              To Employer
-            </Button>
+            <Tooltip title="Change to Employer">
+              <Button 
+                type="primary"
+                icon={<UserSwitchOutlined />}
+                onClick={() => handleUpdateRole(record.id)}
+              />
+            </Tooltip>
           )}
         </Space>
       ),

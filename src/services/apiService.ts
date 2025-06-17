@@ -360,6 +360,26 @@ export const userService = {
       console.error('Error updating user role:', error);
       throw error;
     }
+  },
+
+  lockUser: async (userId: number) => {
+    try {
+      const response = await apiClient.put(`/api/users/${userId}/lock`);
+      return response.data;
+    } catch (error) {
+      console.error('Error locking user:', error);
+      throw error;
+    }
+  },
+
+  unlockUser: async (userId: number) => {
+    try {
+      const response = await apiClient.put(`/api/users/${userId}/unlock`);
+      return response.data;
+    } catch (error) {
+      console.error('Error unlocking user:', error);
+      throw error;
+    }
   }
 };
 
