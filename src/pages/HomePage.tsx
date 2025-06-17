@@ -280,11 +280,11 @@ const HomePage: React.FC = () => {
               key="clear" 
               onClick={() => {
                 setSearchParams({
-                  title: searchParams.title,
+                  title: '',
                   skillId: undefined,
                   industryId: undefined,
                   companyId: undefined,
-                  sortByRelated: searchParams.sortByRelated,
+                  sortByRelated: false,
                   jobLevelId: undefined,
                   workingModelId: undefined,
                   fromSalary: undefined,
@@ -310,6 +310,14 @@ const HomePage: React.FC = () => {
           ]}
         >
           <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <Input
+                placeholder="Search by title"
+                value={searchParams.title}
+                onChange={(e) => setSearchParams({ ...searchParams, title: e.target.value })}
+                allowClear
+              />
+            </Col>
             <Col span={24}>
               <Select
                 style={{ width: '100%' }}
