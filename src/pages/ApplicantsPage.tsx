@@ -17,6 +17,7 @@ const ApplicantsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
   const [selectedArticle, setSelectedArticle] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus | 'ALL'>(ApplicationStatus.SUBMITTED);
   const [sortField, setSortField] = useState<string>('id');
@@ -52,13 +53,15 @@ const ApplicantsPage: React.FC = () => {
         sort: `${sortField},${sortOrder}`,
         ...(selectedArticle && { 'articleId.equals': selectedArticle })
       };
-      const data = await getApplicants(
+      const response = await getApplicants(
         params, 
         selectedStatus === 'ALL' ? undefined : selectedStatus
       );
-      setApplications(data);
+      setApplications(response.data);
+      setTotal(parseInt(response.headers['x-total-count'] || '0', 10));
     } catch (error) {
       console.error('Error fetching applications:', error);
+      message.error('Failed to fetch applications');
     } finally {
       setLoading(false);
     }
@@ -249,10 +252,13 @@ const ApplicantsPage: React.FC = () => {
         pagination={{
           current: currentPage,
           pageSize: pageSize,
+          total: total,
           onChange: (page, size) => {
             setCurrentPage(page);
             setPageSize(size);
           },
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} items`,
         }}
         onChange={handleTableChange}
         onRow={(record) => ({

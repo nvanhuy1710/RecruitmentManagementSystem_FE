@@ -724,7 +724,7 @@ export const getApplicants = async (params: any, status?: ApplicationStatus) => 
     const response = await apiClient.get('/api/applicants', {
       params: queryParams
     });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error fetching applicants:', error);
     throw error;
