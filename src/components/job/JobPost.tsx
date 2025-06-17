@@ -145,6 +145,7 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
               }
               return e?.fileList;
             }}
+            rules={[{ required: true, message: 'Please upload an image!' }]}
           >
             <Upload
               beforeUpload={() => false}
