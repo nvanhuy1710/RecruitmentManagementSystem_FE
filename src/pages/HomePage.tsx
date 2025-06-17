@@ -68,12 +68,12 @@ const HomePage: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [searchParams, setSearchParams] = useState({
     title: '',
-    skillId: undefined as number | undefined,
-    industryId: undefined as number | undefined,
-    companyId: undefined as number | undefined,
+    skillIds: [] as number[],
+    industryIds: [] as number[],
+    companyIds: [] as number[],
     sortByRelated: false,
-    jobLevelId: undefined as number | undefined,
-    workingModelId: undefined as number | undefined,
+    jobLevelIds: [] as number[],
+    workingModelIds: [] as number[],
     fromSalary: undefined as number | undefined,
     toSalary: undefined as number | undefined
   });
@@ -127,20 +127,20 @@ const HomePage: React.FC = () => {
       if (searchParams.title) {
         params['title.contains'] = searchParams.title;
       }
-      if (searchParams.skillId) {
-        params['skillId.equals'] = searchParams.skillId;
+      if (searchParams.skillIds.length > 0) {
+        params['skillId.in'] = searchParams.skillIds.join(',');
       }
-      if (searchParams.industryId) {
-        params['industryId.equals'] = searchParams.industryId;
+      if (searchParams.industryIds.length > 0) {
+        params['industryId.in'] = searchParams.industryIds.join(',');
       }
-      if (searchParams.companyId) {
-        params['companyId.equals'] = searchParams.companyId;
+      if (searchParams.companyIds.length > 0) {
+        params['companyId.in'] = searchParams.companyIds.join(',');
       }
-      if (searchParams.jobLevelId) {
-        params['jobLevelId.equals'] = searchParams.jobLevelId;
+      if (searchParams.jobLevelIds.length > 0) {
+        params['jobLevelId.in'] = searchParams.jobLevelIds.join(',');
       }
-      if (searchParams.workingModelId) {
-        params['workingModelId.equals'] = searchParams.workingModelId;
+      if (searchParams.workingModelIds.length > 0) {
+        params['workingModelId.in'] = searchParams.workingModelIds.join(',');
       }
       if (searchParams.fromSalary) {
         params['salary.greaterThanOrEqual'] = searchParams.fromSalary;
@@ -203,8 +203,8 @@ const HomePage: React.FC = () => {
                     style={{ width: '100%' }}
                     placeholder="Select Skill"
                     allowClear
-                    value={searchParams.skillId}
-                    onChange={(value) => setSearchParams({ ...searchParams, skillId: value })}
+                    value={searchParams.skillIds}
+                    onChange={(value) => setSearchParams({ ...searchParams, skillIds: value })}
                   >
                     {skills.map(skill => (
                       <Select.Option key={skill.id} value={skill.id}>
@@ -218,8 +218,8 @@ const HomePage: React.FC = () => {
                     style={{ width: '100%' }}
                     placeholder="Select Industry"
                     allowClear
-                    value={searchParams.industryId}
-                    onChange={(value) => setSearchParams({ ...searchParams, industryId: value })}
+                    value={searchParams.industryIds}
+                    onChange={(value) => setSearchParams({ ...searchParams, industryIds: value })}
                   >
                     {industries.map(industry => (
                       <Select.Option key={industry.id} value={industry.id}>
@@ -233,8 +233,8 @@ const HomePage: React.FC = () => {
                     style={{ width: '100%' }}
                     placeholder="Select Company"
                     allowClear
-                    value={searchParams.companyId}
-                    onChange={(value) => setSearchParams({ ...searchParams, companyId: value })}
+                    value={searchParams.companyIds}
+                    onChange={(value) => setSearchParams({ ...searchParams, companyIds: value })}
                   >
                     {companies.map(company => (
                       <Select.Option key={company.id} value={company.id}>
@@ -281,12 +281,12 @@ const HomePage: React.FC = () => {
               onClick={() => {
                 setSearchParams({
                   title: '',
-                  skillId: undefined,
-                  industryId: undefined,
-                  companyId: undefined,
+                  skillIds: [],
+                  industryIds: [],
+                  companyIds: [],
                   sortByRelated: false,
-                  jobLevelId: undefined,
-                  workingModelId: undefined,
+                  jobLevelIds: [],
+                  workingModelIds: [],
                   fromSalary: undefined,
                   toSalary: undefined
                 });
@@ -320,11 +320,12 @@ const HomePage: React.FC = () => {
             </Col>
             <Col span={24}>
               <Select
+                mode="multiple"
                 style={{ width: '100%' }}
-                placeholder="Select Skill"
+                placeholder="Select Skills"
                 allowClear
-                value={searchParams.skillId}
-                onChange={(value) => setSearchParams({ ...searchParams, skillId: value })}
+                value={searchParams.skillIds}
+                onChange={(value) => setSearchParams({ ...searchParams, skillIds: value })}
               >
                 {skills.map(skill => (
                   <Select.Option key={skill.id} value={skill.id}>
@@ -335,11 +336,12 @@ const HomePage: React.FC = () => {
             </Col>
             <Col span={24}>
               <Select
+                mode="multiple"
                 style={{ width: '100%' }}
-                placeholder="Select Industry"
+                placeholder="Select Industries"
                 allowClear
-                value={searchParams.industryId}
-                onChange={(value) => setSearchParams({ ...searchParams, industryId: value })}
+                value={searchParams.industryIds}
+                onChange={(value) => setSearchParams({ ...searchParams, industryIds: value })}
               >
                 {industries.map(industry => (
                   <Select.Option key={industry.id} value={industry.id}>
@@ -350,11 +352,12 @@ const HomePage: React.FC = () => {
             </Col>
             <Col span={24}>
               <Select
+                mode="multiple"
                 style={{ width: '100%' }}
-                placeholder="Select Company"
+                placeholder="Select Companies"
                 allowClear
-                value={searchParams.companyId}
-                onChange={(value) => setSearchParams({ ...searchParams, companyId: value })}
+                value={searchParams.companyIds}
+                onChange={(value) => setSearchParams({ ...searchParams, companyIds: value })}
               >
                 {companies.map(company => (
                   <Select.Option key={company.id} value={company.id}>
@@ -365,11 +368,12 @@ const HomePage: React.FC = () => {
             </Col>
             <Col span={24}>
               <Select
+                mode="multiple"
                 style={{ width: '100%' }}
-                placeholder="Select Job Level"
+                placeholder="Select Job Levels"
                 allowClear
-                value={searchParams.jobLevelId}
-                onChange={(value) => setSearchParams({ ...searchParams, jobLevelId: value })}
+                value={searchParams.jobLevelIds}
+                onChange={(value) => setSearchParams({ ...searchParams, jobLevelIds: value })}
               >
                 {jobLevels.map(level => (
                   <Select.Option key={level.id} value={level.id}>
@@ -380,11 +384,12 @@ const HomePage: React.FC = () => {
             </Col>
             <Col span={24}>
               <Select
+                mode="multiple"
                 style={{ width: '100%' }}
-                placeholder="Select Working Model"
+                placeholder="Select Working Models"
                 allowClear
-                value={searchParams.workingModelId}
-                onChange={(value) => setSearchParams({ ...searchParams, workingModelId: value })}
+                value={searchParams.workingModelIds}
+                onChange={(value) => setSearchParams({ ...searchParams, workingModelIds: value })}
               >
                 {workingModels.map(model => (
                   <Select.Option key={model.id} value={model.id}>
