@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Typography, Space, message, Tag } from 'antd';
+import { Table, Button, Typography, Space, message, Tag, Tooltip } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { jobService } from '../services/apiService';
@@ -142,28 +142,28 @@ const ReviewArticlesPage: React.FC = () => {
       align: 'center' as const,
       render: (_: any, record: Article) => (
         <Space size="middle">
-          <Button 
-            type="primary" 
-            icon={<CheckOutlined />} 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleApprove(record.id);
-            }}
-            loading={loadingActions[record.id]?.approve}
-          >
-            Approve
-          </Button>
-          <Button 
-            danger 
-            icon={<CloseOutlined />} 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleReject(record.id);
-            }}
-            loading={loadingActions[record.id]?.reject}
-          >
-            Reject
-          </Button>
+          <Tooltip title="Approve">
+            <Button 
+              type="primary" 
+              icon={<CheckOutlined />} 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleApprove(record.id);
+              }}
+              loading={loadingActions[record.id]?.approve}
+            />
+          </Tooltip>
+          <Tooltip title="Reject">
+            <Button 
+              danger 
+              icon={<CloseOutlined />} 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReject(record.id);
+              }}
+              loading={loadingActions[record.id]?.reject}
+            />
+          </Tooltip>
         </Space>
       ),
     },

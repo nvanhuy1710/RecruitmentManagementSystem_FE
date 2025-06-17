@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, message, Card, Space, Image, Tag } from 'antd';
+import { Form, Input, Button, Typography, message, Card, Space, Image, Tag, Tooltip } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { jobService } from '../services/apiService';
 import dayjs from 'dayjs';
@@ -204,24 +204,24 @@ const ReviewArticleDetailPage: React.FC = () => {
 
           <Form.Item style={{ textAlign: 'center', marginTop: '24px' }}>
             <Space size="large">
-              <Button 
-                type="primary" 
-                icon={<CheckOutlined />} 
-                onClick={handleApprove}
-                loading={approveLoading}
-                size="large"
-              >
-                Approve
-              </Button>
-              <Button 
-                danger 
-                icon={<CloseOutlined />} 
-                onClick={handleReject}
-                loading={rejectLoading}
-                size="large"
-              >
-                Reject
-              </Button>
+              <Tooltip title="Approve">
+                <Button 
+                  type="primary" 
+                  icon={<CheckOutlined />} 
+                  onClick={handleApprove}
+                  loading={approveLoading}
+                  size="large"
+                />
+              </Tooltip>
+              <Tooltip title="Reject">
+                <Button 
+                  danger 
+                  icon={<CloseOutlined />} 
+                  onClick={handleReject}
+                  loading={rejectLoading}
+                  size="large"
+                />
+              </Tooltip>
             </Space>
           </Form.Item>
         </Form>
