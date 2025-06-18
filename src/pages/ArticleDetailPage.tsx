@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload, App, Space } from 'antd';
+import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload, App, Space, Checkbox } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobService } from '../services/apiService';
@@ -60,6 +60,7 @@ interface Article {
   userId: number;
   user: any | null;
   mainImageUrl: string;
+  autoCaculate: boolean;
 }
 
 const ArticleDetailPage: React.FC = () => {
@@ -120,7 +121,8 @@ const ArticleDetailPage: React.FC = () => {
           industryIds: article.industryIds || [],
           jobLevelIds: article.jobLevelIds || [],
           workingModelIds: article.workingModelIds || [],
-          skillIds: article.skillIds || []
+          skillIds: article.skillIds || [],
+          autoCaculate: article.autoCaculate || false
         });
         
         if (article.mainImageUrl) {
@@ -185,7 +187,8 @@ const ArticleDetailPage: React.FC = () => {
         industryIds: values.industryIds,
         jobLevelIds: values.jobLevelIds,
         workingModelIds: values.workingModelIds,
-        skillIds: values.skillIds
+        skillIds: values.skillIds,
+        autoCaculate: values.autoCaculate || false
       };
 
       await jobService.updateArticle(Number(id), articleData);
@@ -210,7 +213,8 @@ const ArticleDetailPage: React.FC = () => {
         industryIds: updatedArticle.industryIds || [],
         jobLevelIds: updatedArticle.jobLevelIds || [],
         workingModelIds: updatedArticle.workingModelIds || [],
-        skillIds: updatedArticle.skillIds || []
+        skillIds: updatedArticle.skillIds || [],
+        autoCaculate: updatedArticle.autoCaculate || false
       });
 
       if (updatedArticle.mainImageUrl) {
@@ -432,6 +436,14 @@ const ArticleDetailPage: React.FC = () => {
                 );
               })}
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="autoCaculate"
+            valuePropName="checked"
+            initialValue={false}
+          >
+            <Checkbox>Auto Calculate</Checkbox>
           </Form.Item>
 
           <Form.Item

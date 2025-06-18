@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Typography, message, Card, Space, Image, Tag, Tooltip } from 'antd';
+import { Form, Input, Button, Typography, message, Card, Space, Image, Tag, Tooltip, Checkbox } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { jobService } from '../services/apiService';
 import dayjs from 'dayjs';
@@ -39,6 +39,7 @@ interface Article {
     id: number;
     name: string;
   }[];
+  autoCaculate?: boolean;
 }
 
 const ReviewArticleDetailPage: React.FC = () => {
@@ -190,6 +191,12 @@ const ReviewArticleDetailPage: React.FC = () => {
               disabled 
               autoSize={{ minRows: 4, maxRows: 8 }}
             />
+          </Form.Item>
+
+          <Form.Item label="Auto Calculate">
+            <Checkbox checked={!!article.autoCaculate} disabled>
+              Auto Calculate
+            </Checkbox>
           </Form.Item>
 
           <Form.Item label="Status">

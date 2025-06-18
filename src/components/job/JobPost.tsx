@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload, Modal, Space } from 'antd';
+import { Form, Input, Button, Card, message, Select, InputNumber, DatePicker, Upload, Modal, Space, Checkbox } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { jobService } from '../../services/apiService';
@@ -43,6 +43,7 @@ interface JobArticle {
   workingModelIds: number[];
   companyId: number;
   skillIds: number[];
+  autoCaculate: boolean;
 }
 
 interface Skill {
@@ -103,7 +104,8 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
         jobLevelIds: values.jobLevelIds,
         workingModelIds: values.workingModelIds,
         companyId: values.companyId,
-        skillIds: values.skillIds
+        skillIds: values.skillIds,
+        autoCaculate: values.autoCaculate || false
       };
 
       const imageFile = values.image?.[0]?.originFileObj;
@@ -299,6 +301,14 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
             rules={[{ required: true, message: 'Please input the job requirements!' }]}
           >
             <TextArea rows={6} placeholder="Enter job requirements (e.g., skills, experience, qualifications)" />
+          </Form.Item>
+
+          <Form.Item
+            name="autoCaculate"
+            valuePropName="checked"
+            initialValue={false}
+          >
+            <Checkbox>Auto Calculate</Checkbox>
           </Form.Item>
 
           <Form.Item>
