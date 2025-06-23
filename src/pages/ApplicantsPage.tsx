@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Typography, Select, Space, Tag, Button, message, Modal, Tooltip } from 'antd';
+import { Table, Typography, Select, Space, Tag, Button, Modal, Tooltip, App } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { getApplicants, jobService, ApplicationStatus, applicantService } from '../services/apiService';
 import { CheckCircleOutlined, CloseCircleOutlined, CalculatorOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
@@ -26,6 +27,7 @@ const ApplicantsPage: React.FC = () => {
   const [selectedArticleForScore, setSelectedArticleForScore] = useState<number | null>(null);
   const [calculating, setCalculating] = useState(false);
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   useEffect(() => {
     fetchArticles();
@@ -87,10 +89,10 @@ const ApplicantsPage: React.FC = () => {
   const handleApprove = async (id: number) => {
     try {
       await applicantService.approveApplication(id);
-      message.success('Application approved successfully');
+      message.success('Application accepted successfully');
       fetchApplications();
     } catch (error) {
-      message.error('Failed to approve application');
+      message.error('Failed to accept application');
     }
   };
 
@@ -158,9 +160,10 @@ const ApplicantsPage: React.FC = () => {
     },
     {
       title: 'Upload date',
-      dataIndex: 'createDate',
-      key: 'createDate',
-      render: (text: any) => text || '',
+      dataIndex: 'createdDate',
+      key: 'createdDate',
+      render: (createdDate: any) =>
+        createdDate ? dayjs.unix(Number(createdDate)).format('DD/MM/YYYY') : '',
     },
     {
       title: 'Score',
@@ -290,4 +293,12 @@ const ApplicantsPage: React.FC = () => {
   );
 };
 
-export default ApplicantsPage; 
+const AppApplicantsPage: React.FC = () => {
+  return (
+    <App>
+      <ApplicantsPage />
+    </App>
+  );
+};
+
+export default AppApplicantsPage; 
