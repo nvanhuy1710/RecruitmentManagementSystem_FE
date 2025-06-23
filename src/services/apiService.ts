@@ -707,6 +707,26 @@ export const applicantService = {
     });
     return response.data;
   },
+
+  getApplicantScores: async (id: string) => {
+    try {
+      const response = await apiClient.get(`/api/applicants/${id}/scores`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching applicant scores:', error);
+      throw error;
+    }
+  },
+
+  calculateApplicantScore: async (applicantId: number) => {
+    try {
+      const response = await apiClient.put(`/api/applicants/${applicantId}/scores`);
+      return response.data;
+    } catch (error) {
+      console.error('Error calculating applicant score:', error);
+      throw error;
+    }
+  },
 };
 
 export enum ApplicationStatus {

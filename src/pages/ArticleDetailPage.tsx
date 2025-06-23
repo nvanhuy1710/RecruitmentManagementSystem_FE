@@ -61,6 +61,7 @@ interface Article {
   user: any | null;
   mainImageUrl: string;
   autoCaculate: boolean;
+  educationRequired: string | null;
 }
 
 const ArticleDetailPage: React.FC = () => {
@@ -122,7 +123,8 @@ const ArticleDetailPage: React.FC = () => {
           jobLevelIds: article.jobLevelIds || [],
           workingModelIds: article.workingModelIds || [],
           skillIds: article.skillIds || [],
-          autoCaculate: article.autoCaculate || false
+          autoCaculate: article.autoCaculate || false,
+          educationRequired: article.educationRequired || null
         });
         
         if (article.mainImageUrl) {
@@ -188,7 +190,8 @@ const ArticleDetailPage: React.FC = () => {
         jobLevelIds: values.jobLevelIds,
         workingModelIds: values.workingModelIds,
         skillIds: values.skillIds,
-        autoCaculate: values.autoCaculate || false
+        autoCaculate: values.autoCaculate || false,
+        educationRequired: values.educationRequired || null
       };
 
       await jobService.updateArticle(Number(id), articleData);
@@ -214,7 +217,8 @@ const ArticleDetailPage: React.FC = () => {
         jobLevelIds: updatedArticle.jobLevelIds || [],
         workingModelIds: updatedArticle.workingModelIds || [],
         skillIds: updatedArticle.skillIds || [],
-        autoCaculate: updatedArticle.autoCaculate || false
+        autoCaculate: updatedArticle.autoCaculate || false,
+        educationRequired: updatedArticle.educationRequired || null
       });
 
       if (updatedArticle.mainImageUrl) {
@@ -444,6 +448,13 @@ const ArticleDetailPage: React.FC = () => {
             initialValue={false}
           >
             <Checkbox>Auto Calculate</Checkbox>
+          </Form.Item>
+
+          <Form.Item
+            name="educationRequired"
+            label="Education Required"
+          >
+            <TextArea rows={4} placeholder="Enter education required" />
           </Form.Item>
 
           <Form.Item

@@ -40,6 +40,7 @@ interface Article {
     name: string;
   }[];
   autoCaculate?: boolean;
+  educationRequired?: string;
 }
 
 const ReviewArticleDetailPage: React.FC = () => {
@@ -197,6 +198,14 @@ const ReviewArticleDetailPage: React.FC = () => {
             <Checkbox checked={!!article.autoCaculate} disabled>
               Auto Calculate
             </Checkbox>
+          </Form.Item>
+
+          <Form.Item label="Education Required">
+            <Input.TextArea 
+              value={article.educationRequired || ''} 
+              disabled 
+              autoSize={{ minRows: 2, maxRows: 4 }}
+            />
           </Form.Item>
 
           <Form.Item label="Status">

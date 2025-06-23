@@ -25,6 +25,9 @@ const ApplicantsPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedArticleForScore, setSelectedArticleForScore] = useState<number | null>(null);
+  const [applicantsForScore, setApplicantsForScore] = useState<any[]>([]);
+  const [selectedApplicantForScore, setSelectedApplicantForScore] = useState<number | null>(null);
+  const [loadingApplicants, setLoadingApplicants] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const navigate = useNavigate();
   const { message } = App.useApp();
@@ -106,20 +109,52 @@ const ApplicantsPage: React.FC = () => {
     }
   };
 
+  const fetchApplicantsByArticle = async (articleId: number) => {
+    try {
+      setLoadingApplicants(true);
+      const params = {
+        page: 0,
+        size: 100, // Lấy tất cả applicants
+        'articleId.equals': articleId,
+        'status.equals': ApplicationStatus.SUBMITTED
+      };
+      const response = await getApplicants(params);
+      setApplicantsForScore(response.data);
+    } catch (error) {
+      console.error('Error fetching applicants by article:', error);
+      message.error('Failed to fetch applicants');
+    } finally {
+      setLoadingApplicants(false);
+    }
+  };
+
+  const handleArticleForScoreChange = (articleId: number) => {
+    setSelectedArticleForScore(articleId);
+    setSelectedApplicantForScore(null);
+    setApplicantsForScore([]);
+    if (articleId) {
+      fetchApplicantsByArticle(articleId);
+    }
+  };
+
   const handleCalculateScore = async () => {
-    if (!selectedArticleForScore) {
-      message.error('Please select an article');
+    if (!selectedApplicantForScore) {
+      message.error('Please select an applicant');
       return;
     }
 
     try {
       setCalculating(true);
-      await applicantService.calculateMatchScore(selectedArticleForScore);
-      message.success('Match scores calculated successfully');
+      // Sử dụng PUT method để calculate score cho applicant
+      await applicantService.calculateApplicantScore(selectedApplicantForScore);
+      message.success('Score calculated successfully');
       setIsModalVisible(false);
+      setSelectedArticleForScore(null);
+      setSelectedApplicantForScore(null);
+      setApplicantsForScore([]);
       fetchApplications();
     } catch (error) {
-      message.error('Failed to calculate match scores');
+      message.error('Failed to calculate score');
     } finally {
       setCalculating(false);
     }
@@ -273,21 +308,56 @@ const ApplicantsPage: React.FC = () => {
         title="Calculate Match Score"
         open={isModalVisible}
         onOk={handleCalculateScore}
-        onCancel={() => setIsModalVisible(false)}
+        onCancel={() => {
+          setIsModalVisible(false);
+          setSelectedArticleForScore(null);
+          setSelectedApplicantForScore(null);
+          setApplicantsForScore([]);
+        }}
         confirmLoading={calculating}
       >
-        <Select
-          style={{ width: '100%' }}
-          placeholder="Select article to calculate match score"
-          onChange={(value) => setSelectedArticleForScore(value)}
-          value={selectedArticleForScore}
-        >
-          {articles.map((article) => (
-            <Option key={article.id} value={article.id}>
-              {article.title}
-            </Option>
-          ))}
-        </Select>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <div>
+            <label>Select Article:</label>
+            <Select
+              style={{ width: '100%', marginTop: '8px' }}
+              placeholder="Select article"
+              onChange={handleArticleForScoreChange}
+              value={selectedArticleForScore}
+            >
+              {articles.map((article) => (
+                <Option key={article.id} value={article.id}>
+                  {article.title}
+                </Option>
+              ))}
+            </Select>
+          </div>
+          
+          {selectedArticleForScore && (
+            <div>
+              <label>Select Applicant:</label>
+              <Select
+                style={{ width: '100%', marginTop: '8px' }}
+                placeholder="Select applicant to calculate score"
+                onChange={(value) => setSelectedApplicantForScore(value)}
+                value={selectedApplicantForScore}
+                loading={loadingApplicants}
+                disabled={loadingApplicants || applicantsForScore.length === 0}
+              >
+                {applicantsForScore.map((applicant) => (
+                  <Option key={applicant.id} value={applicant.id}>
+                    {applicant.fullName} - {applicant.phone}
+                  </Option>
+                ))}
+              </Select>
+              {!loadingApplicants && applicantsForScore.length === 0 && (
+                <div style={{ color: '#999', fontSize: '12px', marginTop: '4px' }}>
+                  No applicants found for this article
+                </div>
+              )}
+            </div>
+          )}
+        </Space>
       </Modal>
     </div>
   );

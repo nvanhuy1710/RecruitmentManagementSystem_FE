@@ -36,6 +36,7 @@ interface Article {
   skills: {
     name: string;
   }[];
+  educationRequired?: string;
 }
 
 interface UserInfo {
@@ -205,6 +206,19 @@ const ViewArticlePage: React.FC = () => {
           <Title level={4}>Requirements</Title>
           <Paragraph>{article.requirement}</Paragraph>
         </div>
+
+        <Divider />
+
+        {/* Education Required Section */}
+        {article.educationRequired && (
+          <>
+            <div style={{ marginBottom: '24px' }}>
+              <Title level={4}>Education Required</Title>
+              <Paragraph>{article.educationRequired}</Paragraph>
+            </div>
+            <Divider />
+          </>
+        )}
 
         {canApply && !isOverDue && (
           <Button type="primary" block onClick={handleApply}>

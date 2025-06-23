@@ -24,6 +24,7 @@ interface Article {
   mainImageUrl?: string;
   status: string;
   createdAt: string;
+  educationRequired?: string;
 }
 
 const ReviewArticlesPage: React.FC = () => {

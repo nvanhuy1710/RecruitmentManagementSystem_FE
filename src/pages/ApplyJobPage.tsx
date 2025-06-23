@@ -49,6 +49,18 @@ const ApplyJobPage: React.FC = () => {
     }
   };
 
+  const beforeUpload = (file: File) => {
+    const isPDF = file.type === 'application/pdf';
+    if (!isPDF) {
+      message.error('You can only upload PDF files!');
+    }
+    const isLt5M = file.size / 1024 / 1024 < 10;
+    if (!isLt5M) {
+      message.error('File must be smaller than 10MB!');
+    }
+    return isPDF && isLt5M ? false : Upload.LIST_IGNORE;
+  };
+
   return (
     <Card style={{ maxWidth: 600, margin: '0 auto', padding: '24px' }}>
       <div style={{ maxWidth: '600px', margin: '24px auto', padding: '0 24px' }}>
@@ -63,9 +75,13 @@ const ApplyJobPage: React.FC = () => {
           <Form.Item name="coverLetter" label="Cover Letter"> 
             <Input.TextArea placeholder="Enter your cover letter" autoSize={{ minRows: 4, maxRows: 8 }} />
           </Form.Item>
-          <Form.Item name="cv" label="Upload CV" valuePropName="fileList" getValueFromEvent={(e) => e.fileList} rules={[{ required: true, message: 'Please upload your CV' }]}> 
-            <Upload multiple={true} beforeUpload={() => false}>
-              <Button icon={<UploadOutlined />}>Select File</Button>
+          <Form.Item name="cv" label="Upload CV (PDF only)" valuePropName="fileList" getValueFromEvent={(e) => e.fileList} rules={[{ required: true, message: 'Please upload your CV' }]}> 
+            <Upload 
+              maxCount={1}
+              accept=".pdf"
+              beforeUpload={beforeUpload}
+            >
+              <Button icon={<UploadOutlined />}>Select PDF File</Button>
             </Upload>
           </Form.Item>
           <Form.Item>

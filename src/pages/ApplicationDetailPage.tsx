@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Typography, Space, Tag, Button, message, List, Tooltip } from 'antd';
+import { Card, Typography, Space, Tag, Button, message, List, Tooltip, Descriptions } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getApplicationById, ApplicationStatus, applicantService, authService } from '../services/apiService';
 import { CheckCircleOutlined, CloseCircleOutlined, FileOutlined } from '@ant-design/icons';
@@ -15,17 +15,35 @@ interface Document {
   fileUrl: string;
 }
 
+interface ApplicantScore {
+  id: number;
+  overall: number;
+  structure: number;
+  skill: number;
+  experience: number;
+  education: number;
+  applicantId: number;
+}
+
 const ApplicationDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [scores, setScores] = useState<ApplicantScore | null>(null);
+  const [scoresLoading, setScoresLoading] = useState(false);
 
   useEffect(() => {
     fetchApplication();
     fetchUserInfo();
   }, [id]);
+
+  useEffect(() => {
+    if (userInfo?.roleName === 'EMPLOYER' && application?.id) {
+      fetchScores();
+    }
+  }, [userInfo, application]);
 
   const fetchUserInfo = async () => {
     try {
@@ -33,6 +51,18 @@ const ApplicationDetailPage: React.FC = () => {
       setUserInfo(data);
     } catch (error) {
       console.error('Error fetching user info:', error);
+    }
+  };
+
+  const fetchScores = async () => {
+    try {
+      setScoresLoading(true);
+      const data = await applicantService.getApplicantScores(id!);
+      setScores(data);
+    } catch (error) {
+      console.error('Error fetching scores:', error);
+    } finally {
+      setScoresLoading(false);
     }
   };
 
@@ -165,6 +195,47 @@ const ApplicationDetailPage: React.FC = () => {
           )}
         </Space>
       </Card>
+
+      {/* Scores Card - Only for EMPLOYER */}
+      {userInfo?.roleName === 'EMPLOYER' && (
+        <Card 
+          title="Applicant Scores" 
+          style={{ marginTop: '24px' }}
+          loading={scoresLoading}
+        >
+          {scores ? (
+            <Descriptions bordered column={2}>
+              <Descriptions.Item label="Overall Score" span={2}>
+                <Tag color={scores.overall >= 70 ? 'green' : scores.overall >= 30 ? 'orange' : 'red'}>
+                  {scores.overall?.toFixed(2) || 'N/A'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Structure Score">
+              <Tag color={scores.structure >= 70 ? 'green' : scores.structure >= 30 ? 'orange' : 'red'}>
+              {scores.structure?.toFixed(2) || 'N/A'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Skill Score">
+              <Tag color={scores.skill >= 70 ? 'green' : scores.skill >= 30 ? 'orange' : 'red'}>
+              {scores.skill?.toFixed(2) || 'N/A'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Experience Score">
+              <Tag color={scores.experience >= 70 ? 'green' : scores.experience >= 30 ? 'orange' : 'red'}>
+              {scores.experience?.toFixed(2) || 'N/A'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Education Score">
+              <Tag color={scores.education >= 70 ? 'green' : scores.education >= 30 ? 'orange' : 'red'}>
+              {scores.education?.toFixed(2) || 'N/A'}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
+          ) : (
+            <Text type="secondary">No scores available for this applicant.</Text>
+          )}
+        </Card>
+      )}
     </div>
   );
 };

@@ -44,6 +44,7 @@ interface JobArticle {
   companyId: number;
   skillIds: number[];
   autoCaculate: boolean;
+  educationRequired: string;
 }
 
 interface Skill {
@@ -105,7 +106,8 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
         workingModelIds: values.workingModelIds,
         companyId: values.companyId,
         skillIds: values.skillIds,
-        autoCaculate: values.autoCaculate || false
+        autoCaculate: values.autoCaculate || false,
+        educationRequired: values.educationRequired || ''
       };
 
       const imageFile = values.image?.[0]?.originFileObj;
@@ -309,6 +311,13 @@ const JobPost: React.FC<JobPostProps> = ({ onSuccess }) => {
             initialValue={false}
           >
             <Checkbox>Auto Calculate</Checkbox>
+          </Form.Item>
+
+          <Form.Item
+            name="educationRequired"
+            label="Education Required"
+          >
+            <TextArea rows={2} placeholder="Enter education required" />
           </Form.Item>
 
           <Form.Item>
